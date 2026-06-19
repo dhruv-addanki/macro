@@ -1,0 +1,38 @@
+[
+  {
+    "id": "photo-context-khichdi",
+    "input": {
+      "context": "photo of rice and squash khichdi, homemade, one medium bowl"
+    },
+    "expected": {
+      "macros": {
+        "calories": [330, 520],
+        "proteinG": [10, 20],
+        "carbsG": [55, 80],
+        "fatG": [5, 15],
+        "sugarG": [2, 6]
+      },
+      "confidence": "medium",
+      "assumptionsInclude": ["rice-heavy khichdi", "Homemade recipes vary"]
+    },
+    "unacceptableErrors": ["photo context ignored", "missing assumptions"]
+  },
+  {
+    "id": "photo-context-chicken",
+    "input": {
+      "context": "photo of grilled chicken and mixed vegetables"
+    },
+    "expected": {
+      "macros": {
+        "calories": [620, 760],
+        "proteinG": [48, 60],
+        "carbsG": [50, 66],
+        "fatG": [14, 24],
+        "sugarG": [3, 9]
+      },
+      "confidence": "low",
+      "assumptionsInclude": ["Fallback estimate"]
+    },
+    "unacceptableErrors": ["protein too low for chicken photo context"]
+  }
+]

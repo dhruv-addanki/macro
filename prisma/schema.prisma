@@ -1,0 +1,385 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String           @id @default(cuid())
+  email           String           @unique
+  displayName     String?
+  lastLoginAt     DateTime?
+  profile         UserProfile?
+  authSessions    AuthSession[]
+  goals           NutritionGoal[]
+  mealGroups      MealGroup[]
+  foodItems       FoodItem[]
+  favoriteFoods   FavoriteFood[]
+  diaryEntries    DiaryEntry[]
+  savedMeals      SavedMeal[]
+  recipes         Recipe[]
+  mealPhotos      MealPhoto[]
+  aiEstimates     AIEstimate[]
+  userCorrections UserCorrection[]
+  aiUsageEvents   AIUsageEvent[]
+  analyticsEvents AnalyticsEvent[]
+  weightEntries   WeightEntry[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model AuthSession {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
+
+  @@index([userId])
+}
+
+model UserProfile {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName         String
+  onboardingCompleted Boolean  @default(false)
+  birthYear           Int?
+  sex                 String?
+  heightCm            Float?
+  weightKg            Float?
+  targetWeightKg      Float?
+  goalType            String?
+  activityLevel       String?
+  unitSystem          String   @default("imperial")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model NutritionGoal {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  calories      Float
+  proteinG      Float
+  carbsG        Float
+  fatG          Float
+  sugarG        Float    @default(0)
+  fiberG        Float    @default(0)
+  sodiumMg      Float    @default(0)
+  effectiveFrom DateTime
+  createdAt     DateTime @default(now())
+
+  @@index([userId, effectiveFrom, createdAt])
+}
+
+model MealGroup {
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  sortOrder    Int
+  isDefault    Boolean      @default(false)
+  diaryEntries DiaryEntry[]
+
+  @@index([userId, sortOrder])
+}
+
+model FoodItem {
+  id                String             @id @default(cuid())
+  ownerUserId       String?
+  ownerUser         User?              @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  sourceType        String
+  name              String
+  brand             String?
+  verified          Boolean            @default(false)
+  caloriesPer100g   Float
+  proteinPer100g    Float
+  carbsPer100g      Float
+  fatPer100g        Float
+  sugarPer100g      Float              @default(0)
+  fiberPer100g      Float              @default(0)
+  sodiumPer100g     Float              @default(0)
+  barcodeProducts   BarcodeProduct[]
+  servingUnits      ServingUnit[]
+  diaryEntries      DiaryEntry[]
+  savedMealItems    SavedMealItem[]
+  favoriteFoods     FavoriteFood[]
+  recipeIngredients RecipeIngredient[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([ownerUserId, name])
+  @@index([verified, name])
+  @@index([sourceType])
+}
+
+model FavoriteFood {
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  foodItemId String
+  foodItem   FoodItem @relation(fields: [foodItemId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@id([userId, foodItemId])
+  @@index([userId, createdAt])
+  @@index([foodItemId])
+}
+
+model BarcodeProduct {
+  id             String   @id @default(cuid())
+  barcode        String   @unique
+  foodItemId     String
+  foodItem       FoodItem @relation(fields: [foodItemId], references: [id], onDelete: Cascade)
+  externalSource String
+  externalId     String?
+  rawPayload     Json
+  lastVerifiedAt DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([foodItemId])
+}
+
+model ServingUnit {
+  id           String   @id @default(cuid())
+  foodItemId   String
+  foodItem     FoodItem @relation(fields: [foodItemId], references: [id], onDelete: Cascade)
+  unitName     String
+  gramsPerUnit Float
+  source       String
+  confidence   String
+  notes        String?
+
+  @@index([foodItemId])
+}
+
+model DiaryEntry {
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date        DateTime
+  mealGroupId String
+  mealGroup   MealGroup    @relation(fields: [mealGroupId], references: [id], onDelete: Cascade)
+  foodItemId  String?
+  foodItem    FoodItem?    @relation(fields: [foodItemId], references: [id], onDelete: SetNull)
+  displayName String
+  quantity    Float
+  unit        String
+  grams       Float
+  calories    Float
+  proteinG    Float
+  carbsG      Float
+  fatG        Float
+  sugarG      Float        @default(0)
+  fiberG      Float        @default(0)
+  sodiumMg    Float        @default(0)
+  sourceType  String
+  confidence  String?
+  assumptions String[]     @default([])
+  aiEstimates AIEstimate[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([userId, date, createdAt])
+  @@index([userId, foodItemId, createdAt])
+  @@index([userId, sourceType])
+  @@index([mealGroupId])
+  @@index([foodItemId])
+}
+
+model MealPhoto {
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storageKey   String
+  thumbnailKey String?
+  retained     Boolean      @default(false)
+  source       String       @default("unknown")
+  mimeType     String?
+  byteLength   Int?
+  aiEstimates  AIEstimate[]
+  uploadedAt   DateTime     @default(now())
+
+  @@index([userId, retained, uploadedAt])
+  @@index([retained, uploadedAt])
+}
+
+model AIEstimate {
+  id            String           @id @default(cuid())
+  userId        String
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  diaryEntryId  String?
+  diaryEntry    DiaryEntry?      @relation(fields: [diaryEntryId], references: [id], onDelete: SetNull)
+  mealPhotoId   String?
+  mealPhoto     MealPhoto?       @relation(fields: [mealPhotoId], references: [id], onDelete: SetNull)
+  inputType     String
+  model         String
+  promptVersion String
+  inputContext  String?
+  outputJson    Json
+  confidence    String
+  usedFallback  Boolean          @default(false)
+  caloriesMin   Float?
+  caloriesMax   Float?
+  assumptions   String[]         @default([])
+  corrections   UserCorrection[]
+  createdAt     DateTime         @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, inputType, createdAt])
+  @@index([diaryEntryId])
+  @@index([mealPhotoId])
+}
+
+model UserCorrection {
+  id             String      @id @default(cuid())
+  userId         String
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  aiEstimateId   String?
+  aiEstimate     AIEstimate? @relation(fields: [aiEstimateId], references: [id], onDelete: SetNull)
+  correctionText String
+  beforeJson     Json
+  afterJson      Json
+  correctionType String
+  createdAt      DateTime    @default(now())
+
+  @@index([userId, createdAt])
+  @@index([aiEstimateId])
+}
+
+model AIUsageEvent {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint      String
+  inputType     String
+  model         String
+  promptVersion String
+  status        String
+  usedFallback  Boolean?
+  costUnits     Float
+  reason        String?
+  createdAt     DateTime @default(now())
+
+  @@index([userId, endpoint, createdAt])
+  @@index([userId, createdAt])
+  @@index([userId, status, createdAt])
+}
+
+model AnalyticsEvent {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventType  String
+  status     String?
+  sourceType String?
+  metadata   Json
+  createdAt  DateTime @default(now())
+
+  @@index([userId, eventType, createdAt])
+  @@index([userId, createdAt])
+}
+
+model SavedMeal {
+  id                 String          @id @default(cuid())
+  userId             String
+  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name               String
+  description        String?
+  defaultServingName String?
+  items              SavedMealItem[]
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  @@index([userId, updatedAt, createdAt])
+}
+
+model SavedMealItem {
+  id          String    @id @default(cuid())
+  savedMealId String
+  savedMeal   SavedMeal @relation(fields: [savedMealId], references: [id], onDelete: Cascade)
+  foodItemId  String?
+  foodItem    FoodItem? @relation(fields: [foodItemId], references: [id], onDelete: SetNull)
+  displayName String
+  quantity    Float
+  unit        String
+  grams       Float
+  calories    Float
+  proteinG    Float
+  carbsG      Float
+  fatG        Float
+  sugarG      Float     @default(0)
+  fiberG      Float     @default(0)
+  sodiumMg    Float     @default(0)
+  sourceType  String    @default("manual")
+  confidence  String?
+  assumptions String[]  @default([])
+
+  @@index([savedMealId])
+  @@index([foodItemId])
+}
+
+model Recipe {
+  id                 String             @id @default(cuid())
+  userId             String
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name               String
+  servings           Float
+  totalCookedWeightG Float?
+  calories           Float
+  proteinG           Float
+  carbsG             Float
+  fatG               Float
+  sugarG             Float              @default(0)
+  fiberG             Float              @default(0)
+  sodiumMg           Float              @default(0)
+  perServingCalories Float
+  perServingProteinG Float
+  perServingCarbsG   Float
+  perServingFatG     Float
+  perServingSugarG   Float              @default(0)
+  perServingFiberG   Float              @default(0)
+  perServingSodiumMg Float              @default(0)
+  ingredients        RecipeIngredient[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@index([userId, updatedAt, createdAt])
+}
+
+model RecipeIngredient {
+  id          String    @id @default(cuid())
+  recipeId    String
+  recipe      Recipe    @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  foodItemId  String?
+  foodItem    FoodItem? @relation(fields: [foodItemId], references: [id], onDelete: SetNull)
+  displayName String
+  quantity    Float
+  unit        String
+  grams       Float
+  calories    Float
+  proteinG    Float
+  carbsG      Float
+  fatG        Float
+  sugarG      Float     @default(0)
+  fiberG      Float     @default(0)
+  sodiumMg    Float     @default(0)
+
+  @@index([recipeId])
+  @@index([foodItemId])
+}
+
+model WeightEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime
+  weightKg  Float
+  createdAt DateTime @default(now())
+
+  @@index([userId, date, createdAt])
+}

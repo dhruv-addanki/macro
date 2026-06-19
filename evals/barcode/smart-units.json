@@ -1,0 +1,66 @@
+[
+  {
+    "id": "packaged-chicken-smart-units",
+    "food": {
+      "id": "eval_chicken",
+      "sourceType": "branded",
+      "name": "Chicken breast strips",
+      "brand": "Eval Brand",
+      "verified": true,
+      "per100g": {
+        "calories": 165,
+        "proteinG": 31,
+        "carbsG": 0,
+        "fatG": 3.6,
+        "fiberG": 0,
+        "sodiumMg": 74
+      },
+      "servingUnits": []
+    },
+    "expectedUnits": [
+      {
+        "unitName": "1 breast filet",
+        "grams": [150, 190],
+        "confidence": "medium"
+      },
+      {
+        "unitName": "1 cup cooked chopped",
+        "grams": [120, 160],
+        "confidence": "medium"
+      }
+    ],
+    "unacceptableErrors": ["only package units returned"]
+  },
+  {
+    "id": "sauce-smart-units",
+    "food": {
+      "id": "eval_sauce",
+      "sourceType": "branded",
+      "name": "Tikka sauce",
+      "brand": "Eval Brand",
+      "verified": true,
+      "per100g": {
+        "calories": 90,
+        "proteinG": 2,
+        "carbsG": 11,
+        "fatG": 4,
+        "fiberG": 1,
+        "sodiumMg": 620
+      },
+      "servingUnits": []
+    },
+    "expectedUnits": [
+      {
+        "unitName": "1 tbsp",
+        "grams": [14, 16],
+        "confidence": "medium"
+      },
+      {
+        "unitName": "1 tsp",
+        "grams": [4, 6],
+        "confidence": "medium"
+      }
+    ],
+    "unacceptableErrors": ["missing household sauce units"]
+  }
+]

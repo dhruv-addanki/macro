@@ -1,0 +1,36 @@
+{
+  "name": "macro",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Macro calorie, macro, nutrition, barcode, and AI meal tracking app.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w @macro/api",
+    "dev:db": "docker compose up -d postgres",
+    "dev:mobile": "npm run dev -w @macro/mobile",
+    "db:validate": "prisma validate",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio",
+    "eval:api": "npm run eval -w @macro/api",
+    "check:openai": "npm run check:openai -w @macro/api",
+    "cleanup:meal-photos": "npm run cleanup:meal-photos -w @macro/api",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "overrides": {
+    "@types/react": "19.0.14"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "dotenv": "^17.4.2",
+    "prisma": "^7.8.0"
+  }
+}

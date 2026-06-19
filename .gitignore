@@ -1,0 +1,17 @@
+node_modules
+.expo
+.turbo
+.env
+.env.local
+.DS_Store
+.macro-data
+dist
+dist-web
+**/dist-web
+**/dist-web-*
+build
+coverage
+*.log
+apps/mobile/.expo
+apps/mobile/web-build
+apps/api/.env

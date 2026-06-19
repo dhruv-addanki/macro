@@ -1,0 +1,56 @@
+[
+  {
+    "id": "khichdi-rice-squash-dal",
+    "input": {
+      "text": "rice and squash khichdi, homemade, one bowl"
+    },
+    "expected": {
+      "macros": {
+        "calories": [330, 520],
+        "proteinG": [10, 20],
+        "carbsG": [55, 80],
+        "fatG": [5, 15],
+        "sugarG": [2, 6]
+      },
+      "confidence": "medium",
+      "assumptionsInclude": ["rice-heavy khichdi", "Homemade recipes vary"]
+    },
+    "unacceptableErrors": ["missing cultural dish recognition", "no assumptions"]
+  },
+  {
+    "id": "paneer-roti-meal",
+    "input": {
+      "text": "paneer with two roti, homemade dinner"
+    },
+    "expected": {
+      "macros": {
+        "calories": [820, 1040],
+        "proteinG": [38, 52],
+        "carbsG": [70, 90],
+        "fatG": [32, 46],
+        "sugarG": [3, 9]
+      },
+      "confidence": "medium",
+      "assumptionsInclude": ["Fallback estimate", "moderate single serving"]
+    },
+    "unacceptableErrors": ["zero macros", "missing editable uncertainty"]
+  },
+  {
+    "id": "chicken-bowl",
+    "input": {
+      "text": "chicken bowl with vegetables, homemade lunch"
+    },
+    "expected": {
+      "macros": {
+        "calories": [620, 760],
+        "proteinG": [48, 60],
+        "carbsG": [50, 66],
+        "fatG": [14, 24],
+        "sugarG": [3, 9]
+      },
+      "confidence": "medium",
+      "assumptionsInclude": ["Fallback estimate"]
+    },
+    "unacceptableErrors": ["protein too low for chicken meal"]
+  }
+]

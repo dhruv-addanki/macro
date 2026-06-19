@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "Macro",
+    "slug": "macro",
+    "version": "0.1.0",
+    "scheme": "macro",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Macro uses the camera to scan barcodes and estimate meal nutrition from photos.",
+        "NSPhotoLibraryUsageDescription": "Macro can use selected meal photos for nutrition estimates."
+      }
+    },
+    "android": {
+      "permissions": [
+        "CAMERA"
+      ]
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-image-picker",
+      "expo-secure-store"
+    ]
+  }
+}

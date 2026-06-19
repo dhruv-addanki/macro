@@ -1,0 +1,30 @@
+[
+  {
+    "id": "khichdi-no-ghee",
+    "input": {
+      "text": "rice and squash khichdi, homemade, one bowl"
+    },
+    "correctionText": "no ghee",
+    "expected": {
+      "caloriesDelta": [-45, -45],
+      "fatDelta": [-5, -5],
+      "assumptionsInclude": ["no added oil/ghee"],
+      "correctionType": "remove_added_fat"
+    },
+    "unacceptableErrors": ["ghee assumption remains", "correction not stored"]
+  },
+  {
+    "id": "khichdi-half-portion",
+    "input": {
+      "text": "rice and squash khichdi, homemade, one bowl"
+    },
+    "correctionText": "half bowl",
+    "expected": {
+      "caloriesRatio": [0.49, 0.51],
+      "fatRatio": [0.49, 0.51],
+      "assumptionsInclude": ["half portion"],
+      "correctionType": "portion_decrease"
+    },
+    "unacceptableErrors": ["macros not scaled", "portion not scaled"]
+  }
+]
