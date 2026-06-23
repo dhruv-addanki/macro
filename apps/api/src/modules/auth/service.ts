@@ -326,11 +326,21 @@ export async function userIdForSessionTokenAsync(sessionToken?: string): Promise
 }
 
 export function resolveUserIdFromAuthHeader(value: unknown): string {
-  return userIdForSessionToken(getSessionTokenFromHeader(value)) ?? DEMO_USER_ID;
+  const userId = userIdForSessionToken(getSessionTokenFromHeader(value));
+  if (userId) return userId;
+  if (env.allowDemoUser) return DEMO_USER_ID;
+  const error = new Error("Authentication required") as Error & { statusCode: number };
+  error.statusCode = 401;
+  throw error;
 }
 
 export async function resolveUserIdFromAuthHeaderAsync(value: unknown): Promise<string> {
-  return (await userIdForSessionTokenAsync(getSessionTokenFromHeader(value))) ?? DEMO_USER_ID;
+  const userId = await userIdForSessionTokenAsync(getSessionTokenFromHeader(value));
+  if (userId) return userId;
+  if (env.allowDemoUser) return DEMO_USER_ID;
+  const error = new Error("Authentication required") as Error & { statusCode: number };
+  error.statusCode = 401;
+  throw error;
 }
 
 export function ensureDemoAuthUser(): AuthUser {

@@ -2,6 +2,7 @@ import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { env } from "../../lib/env";
 import { store } from "../../lib/store";
 import { deleteMealPhoto, listMealPhotos, retainMealPhoto } from "./service";
 
@@ -10,14 +11,18 @@ const ONE_PIXEL_PNG_BASE64 =
 
 describe("photo service", () => {
   let tempDir = "";
+  let originalPhotoStorageDriver = env.photoStorageDriver;
 
   beforeEach(() => {
+    originalPhotoStorageDriver = env.photoStorageDriver;
+    env.photoStorageDriver = "local";
     tempDir = mkdtempSync(join(tmpdir(), "macro-photos-"));
     process.env.MACRO_PHOTO_DIR = tempDir;
     store.mealPhotos = [];
   });
 
   afterEach(() => {
+    env.photoStorageDriver = originalPhotoStorageDriver;
     store.mealPhotos = [];
     delete process.env.MACRO_PHOTO_DIR;
     rmSync(tempDir, { force: true, recursive: true });
@@ -57,6 +62,19 @@ describe("photo service", () => {
       mimeType: "image/jpeg",
       retainPhoto: true,
       source: "upload"
+    })).resolves.toBeUndefined();
+
+    expect(listMealPhotos()).toHaveLength(0);
+  });
+
+  it("discards photos when retained storage is disabled", async () => {
+    env.photoStorageDriver = "disabled";
+
+    await expect(retainMealPhoto({
+      imageBase64: ONE_PIXEL_PNG_BASE64,
+      mimeType: "image/png",
+      retainPhoto: true,
+      source: "camera"
     })).resolves.toBeUndefined();
 
     expect(listMealPhotos()).toHaveLength(0);

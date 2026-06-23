@@ -19,6 +19,9 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  InputAccessoryView,
+  Keyboard,
+  KeyboardAvoidingView,
   Linking,
   Platform,
   Pressable,
@@ -26,14 +29,16 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  type TextInputProps,
   View
 } from "react-native";
-import { api } from "../src/api/client";
+import { PHOTO_RETENTION_ENABLED, api } from "../src/api/client";
 import { ConfidenceBadge } from "../src/components/ConfidenceBadge";
 import { colors } from "../src/theme/colors";
 import { todayIso } from "../src/utils/date";
 
 type Mode = "text" | "photo" | "barcode" | "search";
+const KEYBOARD_ACCESSORY_ID = "macro-keyboard-done";
 const MEAL_PHOTO_MAX_WIDTH = 1280;
 const MEAL_PHOTO_JPEG_QUALITY = 0.65;
 
@@ -43,8 +48,8 @@ export default function AddFoodScreen() {
   const mealGroupId = params.mealGroupId ?? "meal_lunch";
   const queryClient = useQueryClient();
   const [mode, setMode] = useState<Mode>("text");
-  const [text, setText] = useState("rice and squash khichdi, homemade, one bowl");
-  const [photoContext, setPhotoContext] = useState("rice and squash khichdi, homemade, one bowl");
+  const [text, setText] = useState("");
+  const [photoContext, setPhotoContext] = useState("");
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [imageBase64, setImageBase64] = useState<string | undefined>();
   const [photoMimeType, setPhotoMimeType] = useState("image/jpeg");
@@ -68,17 +73,17 @@ export default function AddFoodScreen() {
   const [barcodeQuantity, setBarcodeQuantity] = useState("1");
   const [search, setSearch] = useState("");
   const [showCustomFood, setShowCustomFood] = useState(false);
-  const [customName, setCustomName] = useState("Homemade yogurt bowl");
+  const [customName, setCustomName] = useState("");
   const [customBrand, setCustomBrand] = useState("");
-  const [customServingName, setCustomServingName] = useState("serving");
-  const [customServingGrams, setCustomServingGrams] = useState("250");
-  const [customCalories, setCustomCalories] = useState("320");
-  const [customProtein, setCustomProtein] = useState("30");
-  const [customCarbs, setCustomCarbs] = useState("38");
-  const [customFat, setCustomFat] = useState("6");
-  const [customSugar, setCustomSugar] = useState("12");
-  const [customFiber, setCustomFiber] = useState("4");
-  const [customSodium, setCustomSodium] = useState("120");
+  const [customServingName, setCustomServingName] = useState("");
+  const [customServingGrams, setCustomServingGrams] = useState("");
+  const [customCalories, setCustomCalories] = useState("");
+  const [customProtein, setCustomProtein] = useState("");
+  const [customCarbs, setCustomCarbs] = useState("");
+  const [customFat, setCustomFat] = useState("");
+  const [customSugar, setCustomSugar] = useState("");
+  const [customFiber, setCustomFiber] = useState("");
+  const [customSodium, setCustomSodium] = useState("");
   const [correction, setCorrection] = useState("");
   const [estimate, setEstimate] = useState<MealEstimate | null>(null);
   const [estimateId, setEstimateId] = useState<string | undefined>();
@@ -126,7 +131,7 @@ export default function AddFoodScreen() {
     mutationFn: () => {
       if (!imageBase64) throw new Error("Take or choose a meal photo first.");
       return api.estimatePhotoMeal({
-        context: photoContext,
+        context: photoContext.trim(),
         imageBase64,
         date,
         mealGroupId,
@@ -155,7 +160,7 @@ export default function AddFoodScreen() {
   const correctionMutation = useMutation({
     mutationFn: () => {
       if (!estimate) throw new Error("No estimate to correct");
-      return api.correctMeal({ estimate, estimateId, correctionText: correction });
+      return api.correctMeal({ estimate, estimateId, correctionText: correction.trim() });
     },
     onSuccess: (response) => {
       setEstimate(response.estimate);
@@ -172,21 +177,6 @@ export default function AddFoodScreen() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["diary", date] });
-      await queryClient.invalidateQueries({ queryKey: ["analytics-summary"] });
-      router.back();
-    }
-  });
-
-  const logAndSaveEstimateMutation = useMutation({
-    mutationFn: async () => {
-      if (!estimate) throw new Error("No estimate to log");
-      const entry = await api.logEstimate({ estimate, estimateId, date, mealGroupId, sourceType: estimateSource });
-      await api.saveMeal({ name: estimate.dishName, entryIds: [entry.id] });
-      return entry;
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["diary", date] });
-      await queryClient.invalidateQueries({ queryKey: ["saved-meals"] });
       await queryClient.invalidateQueries({ queryKey: ["analytics-summary"] });
       router.back();
     }
@@ -389,7 +379,6 @@ export default function AddFoodScreen() {
       photoEstimateMutation.isPending ||
       correctionMutation.isPending ||
       logEstimateMutation.isPending ||
-      logAndSaveEstimateMutation.isPending ||
       barcodeMutation.isPending ||
       createBarcodeProductMutation.isPending ||
       updateBarcodeProductMutation.isPending ||
@@ -401,7 +390,6 @@ export default function AddFoodScreen() {
       photoEstimateMutation.isPending,
       correctionMutation.isPending,
       logEstimateMutation.isPending,
-      logAndSaveEstimateMutation.isPending,
       barcodeMutation.isPending,
       createBarcodeProductMutation.isPending,
       updateBarcodeProductMutation.isPending,
@@ -476,7 +464,18 @@ export default function AddFoodScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 72 : 0}
+      style={styles.keyboardAvoider}
+    >
+      <ScrollView
+        automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
+        contentContainerStyle={styles.content}
+        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+        keyboardShouldPersistTaps="handled"
+        onScrollBeginDrag={Keyboard.dismiss}
+      >
       <View style={styles.modeRow}>
         <ModeButton active={mode === "text"} icon={<Sparkles size={18} color={mode === "text" ? "#FFFFFF" : colors.accentDark} />} label="Type" onPress={() => setMode("text")} />
         <ModeButton active={mode === "photo"} icon={<Camera size={18} color={mode === "photo" ? "#FFFFFF" : colors.accentDark} />} label="Photo" onPress={() => setMode("photo")} />
@@ -486,7 +485,7 @@ export default function AddFoodScreen() {
 
       {mode === "text" ? (
         <Panel>
-          <TextInput
+          <FormTextInput
             multiline
             onChangeText={setText}
             placeholder="Meal description"
@@ -534,28 +533,30 @@ export default function AddFoodScreen() {
           </View>
           {photoPermissionError ? <Text style={styles.permissionError}>{photoPermissionError}</Text> : null}
           {photoUri ? <Image source={{ uri: photoUri }} style={styles.photoPreview} /> : null}
-          <Pressable
-            accessibilityLabel="Retain meal photo"
-            accessibilityRole="switch"
-            accessibilityState={{ checked: retainPhoto }}
-            onPress={() => setRetainPhoto((value) => !value)}
-            style={styles.toggleRow}
-          >
-            <View style={[styles.toggleBox, retainPhoto && styles.toggleBoxActive]}>
-              {retainPhoto ? <Check color="#FFFFFF" size={14} /> : null}
-            </View>
-            <Text style={styles.toggleLabel}>Retain photo</Text>
-            <Text style={styles.toggleState}>{retainPhoto ? "On" : "Off"}</Text>
-          </Pressable>
-          <TextInput
+          {PHOTO_RETENTION_ENABLED ? (
+            <Pressable
+              accessibilityLabel="Retain meal photo"
+              accessibilityRole="switch"
+              accessibilityState={{ checked: retainPhoto }}
+              onPress={() => setRetainPhoto((value) => !value)}
+              style={styles.toggleRow}
+            >
+              <View style={[styles.toggleBox, retainPhoto && styles.toggleBoxActive]}>
+                {retainPhoto ? <Check color="#FFFFFF" size={14} /> : null}
+              </View>
+              <Text style={styles.toggleLabel}>Retain photo</Text>
+              <Text style={styles.toggleState}>{retainPhoto ? "On" : "Off"}</Text>
+            </Pressable>
+          ) : null}
+          <FormTextInput
             multiline
             onChangeText={setPhotoContext}
-            placeholder="Meal context"
+            placeholder="Optional context helps accuracy"
             style={[styles.input, styles.multiline]}
             value={photoContext}
           />
           <PrimaryButton
-            disabled={!photoContext.trim() || !hasMealPhoto || currentLoading}
+            disabled={!hasMealPhoto || currentLoading}
             icon={<Sparkles color="#FFFFFF" size={18} />}
             label="Analyze meal"
             loading={photoEstimateMutation.isPending}
@@ -578,7 +579,7 @@ export default function AddFoodScreen() {
           ) : (
             <SecondaryButton icon={<Camera color={colors.accentDark} size={18} />} label="Open scanner" onPress={openBarcodeScanner} />
           )}
-          <TextInput
+          <FormTextInput
             autoCapitalize="none"
             keyboardType="number-pad"
             onChangeText={(value) => {
@@ -638,7 +639,7 @@ export default function AddFoodScreen() {
 
       {mode === "search" ? (
         <Panel>
-          <TextInput onChangeText={setSearch} placeholder="Search foods" style={styles.input} value={search} />
+          <FormTextInput onChangeText={setSearch} placeholder="Search foods" style={styles.input} value={search} />
           {search.trim().length > 0 ? (
             <FoodResultSection
               favoriteIds={favoriteIds}
@@ -729,7 +730,7 @@ export default function AddFoodScreen() {
                 ))}
               </View>
               <View style={styles.logRow}>
-                <TextInput
+                <FormTextInput
                   accessibilityLabel="Barcode food quantity"
                   keyboardType="decimal-pad"
                   onChangeText={setBarcodeQuantity}
@@ -830,12 +831,15 @@ export default function AddFoodScreen() {
           loading={currentLoading}
           onChangeCorrection={setCorrection}
           onChangeEstimate={setEstimate}
-          onCorrect={() => correctionMutation.mutate()}
+          onCorrect={() => {
+            if (correction.trim()) correctionMutation.mutate();
+          }}
           onLog={() => logEstimateMutation.mutate()}
-          onLogAndSave={() => logAndSaveEstimateMutation.mutate()}
         />
       ) : null}
-    </ScrollView>
+      </ScrollView>
+      <KeyboardDoneAccessory />
+    </KeyboardAvoidingView>
   );
 }
 
@@ -898,12 +902,52 @@ function PrimaryButton({
   );
 }
 
-function SecondaryButton({ icon, label, onPress }: { icon: ReactNode; label: string; onPress: () => void }) {
+function SecondaryButton({
+  disabled,
+  icon,
+  label,
+  loading,
+  onPress
+}: {
+  disabled?: boolean;
+  icon: ReactNode;
+  label: string;
+  loading?: boolean;
+  onPress: () => void;
+}) {
+  const inactive = Boolean(disabled || loading);
+
   return (
-    <Pressable onPress={onPress} style={styles.secondaryButton}>
-      {icon}
+    <Pressable disabled={inactive} onPress={onPress} style={[styles.secondaryButton, inactive && styles.buttonDisabled]}>
+      {loading ? <ActivityIndicator color={colors.accentDark} /> : icon}
       <Text style={styles.secondaryButtonText}>{label}</Text>
     </Pressable>
+  );
+}
+
+function FormTextInput(props: TextInputProps) {
+  return (
+    <TextInput
+      blurOnSubmit={props.blurOnSubmit ?? true}
+      inputAccessoryViewID={Platform.OS === "ios" ? KEYBOARD_ACCESSORY_ID : undefined}
+      onSubmitEditing={props.onSubmitEditing ?? Keyboard.dismiss}
+      returnKeyType={props.returnKeyType ?? "done"}
+      {...props}
+    />
+  );
+}
+
+function KeyboardDoneAccessory() {
+  if (Platform.OS !== "ios") return null;
+
+  return (
+    <InputAccessoryView nativeID={KEYBOARD_ACCESSORY_ID}>
+      <View style={styles.keyboardAccessory}>
+        <Pressable accessibilityLabel="Dismiss keyboard" onPress={Keyboard.dismiss} style={styles.keyboardDoneButton}>
+          <Text style={styles.keyboardDoneText}>Done</Text>
+        </Pressable>
+      </View>
+    </InputAccessoryView>
   );
 }
 
@@ -1002,7 +1046,7 @@ function FoodResultRow({
       </View>
 
       <View style={styles.logRow}>
-        <TextInput
+        <FormTextInput
           accessibilityLabel={`${food.name} quantity`}
           keyboardType="decimal-pad"
           onChangeText={setQuantity}
@@ -1082,17 +1126,17 @@ function BarcodeProductForm({
   return (
     <View style={styles.customFoodBox}>
       <Text style={styles.subTitle}>{title}</Text>
-      <TextInput accessibilityLabel={`${title} name`} onChangeText={onChangeName} placeholder="Product name" style={styles.input} value={name} />
-      <TextInput accessibilityLabel={`${title} brand`} onChangeText={onChangeBrand} placeholder="Brand, optional" style={styles.input} value={brand} />
+      <FormTextInput accessibilityLabel={`${title} name`} onChangeText={onChangeName} placeholder="Product name" style={styles.input} value={name} />
+      <FormTextInput accessibilityLabel={`${title} brand`} onChangeText={onChangeBrand} placeholder="Brand, optional" style={styles.input} value={brand} />
       <View style={styles.twoCol}>
-        <TextInput
+        <FormTextInput
           accessibilityLabel={`${title} serving name`}
           onChangeText={onChangeServingName}
           placeholder="Serving name"
           style={styles.input}
           value={servingName}
         />
-        <TextInput
+        <FormTextInput
           accessibilityLabel={`${title} serving grams`}
           keyboardType="decimal-pad"
           onChangeText={onChangeServingGrams}
@@ -1102,7 +1146,7 @@ function BarcodeProductForm({
         />
       </View>
       <View style={styles.twoCol}>
-        <TextInput
+        <FormTextInput
           accessibilityLabel={`${title} calories`}
           keyboardType="decimal-pad"
           onChangeText={onChangeCalories}
@@ -1110,7 +1154,7 @@ function BarcodeProductForm({
           style={styles.input}
           value={calories}
         />
-        <TextInput
+        <FormTextInput
           accessibilityLabel={`${title} protein`}
           keyboardType="decimal-pad"
           onChangeText={onChangeProtein}
@@ -1120,7 +1164,7 @@ function BarcodeProductForm({
         />
       </View>
       <View style={styles.twoCol}>
-        <TextInput
+        <FormTextInput
           accessibilityLabel={`${title} carbs`}
           keyboardType="decimal-pad"
           onChangeText={onChangeCarbs}
@@ -1128,7 +1172,7 @@ function BarcodeProductForm({
           style={styles.input}
           value={carbs}
         />
-        <TextInput
+        <FormTextInput
           accessibilityLabel={`${title} fat`}
           keyboardType="decimal-pad"
           onChangeText={onChangeFat}
@@ -1138,7 +1182,7 @@ function BarcodeProductForm({
         />
       </View>
       <View style={styles.twoCol}>
-        <TextInput
+        <FormTextInput
           accessibilityLabel={`${title} sugar`}
           keyboardType="decimal-pad"
           onChangeText={onChangeSugar}
@@ -1146,7 +1190,7 @@ function BarcodeProductForm({
           style={styles.input}
           value={sugar}
         />
-        <TextInput
+        <FormTextInput
           accessibilityLabel={`${title} fiber`}
           keyboardType="decimal-pad"
           onChangeText={onChangeFiber}
@@ -1155,7 +1199,7 @@ function BarcodeProductForm({
           value={fiber}
         />
       </View>
-      <TextInput
+      <FormTextInput
         accessibilityLabel={`${title} sodium`}
         keyboardType="decimal-pad"
         onChangeText={onChangeSodium}
@@ -1230,17 +1274,17 @@ function CustomFoodForm({
   return (
     <View style={styles.customFoodBox}>
       <Text style={styles.subTitle}>Custom food</Text>
-      <TextInput accessibilityLabel="Custom food name" onChangeText={onChangeName} placeholder="Food name" style={styles.input} value={name} />
-      <TextInput accessibilityLabel="Custom food brand" onChangeText={onChangeBrand} placeholder="Brand, optional" style={styles.input} value={brand} />
+      <FormTextInput accessibilityLabel="Custom food name" onChangeText={onChangeName} placeholder="Food name" style={styles.input} value={name} />
+      <FormTextInput accessibilityLabel="Custom food brand" onChangeText={onChangeBrand} placeholder="Brand, optional" style={styles.input} value={brand} />
       <View style={styles.twoCol}>
-        <TextInput
+        <FormTextInput
           accessibilityLabel="Custom serving name"
           onChangeText={onChangeServingName}
           placeholder="Serving name"
           style={styles.input}
           value={servingName}
         />
-        <TextInput
+        <FormTextInput
           accessibilityLabel="Custom serving grams"
           keyboardType="decimal-pad"
           onChangeText={onChangeServingGrams}
@@ -1250,7 +1294,7 @@ function CustomFoodForm({
         />
       </View>
       <View style={styles.twoCol}>
-        <TextInput
+        <FormTextInput
           accessibilityLabel="Custom calories"
           keyboardType="decimal-pad"
           onChangeText={onChangeCalories}
@@ -1258,7 +1302,7 @@ function CustomFoodForm({
           style={styles.input}
           value={calories}
         />
-        <TextInput
+        <FormTextInput
           accessibilityLabel="Custom protein"
           keyboardType="decimal-pad"
           onChangeText={onChangeProtein}
@@ -1268,7 +1312,7 @@ function CustomFoodForm({
         />
       </View>
       <View style={styles.twoCol}>
-        <TextInput
+        <FormTextInput
           accessibilityLabel="Custom carbs"
           keyboardType="decimal-pad"
           onChangeText={onChangeCarbs}
@@ -1276,7 +1320,7 @@ function CustomFoodForm({
           style={styles.input}
           value={carbs}
         />
-        <TextInput
+        <FormTextInput
           accessibilityLabel="Custom fat"
           keyboardType="decimal-pad"
           onChangeText={onChangeFat}
@@ -1286,7 +1330,7 @@ function CustomFoodForm({
         />
       </View>
       <View style={styles.twoCol}>
-        <TextInput
+        <FormTextInput
           accessibilityLabel="Custom sugar"
           keyboardType="decimal-pad"
           onChangeText={onChangeSugar}
@@ -1294,7 +1338,7 @@ function CustomFoodForm({
           style={styles.input}
           value={sugar}
         />
-        <TextInput
+        <FormTextInput
           accessibilityLabel="Custom fiber"
           keyboardType="decimal-pad"
           onChangeText={onChangeFiber}
@@ -1303,7 +1347,7 @@ function CustomFoodForm({
           value={fiber}
         />
       </View>
-      <TextInput
+      <FormTextInput
         accessibilityLabel="Custom sodium"
         keyboardType="decimal-pad"
         onChangeText={onChangeSodium}
@@ -1331,8 +1375,7 @@ function EstimateReview({
   onChangeCorrection,
   onChangeEstimate,
   onCorrect,
-  onLog,
-  onLogAndSave
+  onLog
 }: {
   correction: string;
   estimate: MealEstimate;
@@ -1341,7 +1384,6 @@ function EstimateReview({
   onChangeEstimate: (estimate: MealEstimate) => void;
   onCorrect: () => void;
   onLog: () => void;
-  onLogAndSave: () => void;
 }) {
   function positiveNumber(value: string, fallback: number) {
     const parsed = Number(value);
@@ -1519,17 +1561,22 @@ function EstimateReview({
         ))}
       </View>
 
-      <TextInput
+      <FormTextInput
         onChangeText={onChangeCorrection}
-        placeholder="Correction"
+        placeholder="Correction, e.g. half portion or extra sauce"
         style={styles.input}
         value={correction}
       />
       <View style={styles.photoActions}>
-        <SecondaryButton icon={<Sparkles color={colors.accentDark} size={18} />} label="Apply" onPress={onCorrect} />
+        <SecondaryButton
+          disabled={!correction.trim() || loading}
+          icon={<Sparkles color={colors.accentDark} size={18} />}
+          label="Apply correction"
+          loading={loading}
+          onPress={onCorrect}
+        />
         <PrimaryButton disabled={loading} icon={<Check color="#FFFFFF" size={18} />} label="Log meal" loading={loading} onPress={onLog} />
       </View>
-      <SecondaryButton icon={<Check color={colors.accentDark} size={18} />} label="Log and save" onPress={onLogAndSave} />
     </Panel>
   );
 }
@@ -1550,7 +1597,7 @@ function EditField({
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
-      <TextInput
+      <FormTextInput
         accessibilityLabel={accessibilityLabel}
         keyboardType={keyboardType}
         onChangeText={onChangeText}
@@ -1571,6 +1618,9 @@ function MacroTile({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
+  keyboardAvoider: {
+    flex: 1
+  },
   content: {
     backgroundColor: colors.background,
     gap: 14,
@@ -1667,6 +1717,24 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     color: colors.accentDark,
     fontSize: 14,
+    fontWeight: "900"
+  },
+  keyboardAccessory: {
+    alignItems: "flex-end",
+    backgroundColor: colors.surface,
+    borderTopColor: colors.border,
+    borderTopWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8
+  },
+  keyboardDoneButton: {
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8
+  },
+  keyboardDoneText: {
+    color: colors.accentDark,
+    fontSize: 15,
     fontWeight: "900"
   },
   buttonDisabled: {

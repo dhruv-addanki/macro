@@ -11,6 +11,8 @@
     "dev:api": "npm run dev -w @macro/api",
     "dev:db": "docker compose up -d postgres",
     "dev:mobile": "npm run dev -w @macro/mobile",
+    "build:railway": "npm run db:generate",
+    "start:railway": "npm run start -w @macro/api",
     "db:validate": "prisma validate",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
@@ -36,7 +38,7 @@
   "engines": {
     "node": ">=20"
   },
-  "devDependencies": {
+  "dependencies": {
     "dotenv": "^17.4.2",
     "prisma": "^7.8.0"
   }

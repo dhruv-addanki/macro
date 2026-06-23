@@ -383,12 +383,28 @@ function snapshotStore(): Store {
   return deserializeStore(JSON.parse(JSON.stringify(serializeStore(store))) as Partial<PersistedStore>);
 }
 
+function prismaBootstrapStore(): Store {
+  const snapshot = snapshotStore();
+  if (env.seedDemoUser) return snapshot;
+
+  snapshot.authUsers = snapshot.authUsers.filter((user) => user.id !== DEMO_USER_ID);
+  snapshot.authSessions = snapshot.authSessions.filter((session) => session.userId !== DEMO_USER_ID);
+  snapshot.profiles = snapshot.profiles.filter((profile) => profile.userId !== DEMO_USER_ID);
+  snapshot.goals = snapshot.goals.filter((goal) => goal.userId !== DEMO_USER_ID);
+  snapshot.mealGroups = snapshot.mealGroups.filter((mealGroup) => mealGroup.userId !== DEMO_USER_ID);
+  snapshot.foods = snapshot.foods.filter((food) => food.ownerUserId !== DEMO_USER_ID);
+  snapshot.favoriteFoodIds = new Set(
+    [...snapshot.favoriteFoodIds].filter((key) => key.includes(":") && !key.startsWith(`${DEMO_USER_ID}:`))
+  );
+  return snapshot;
+}
+
 export async function initializeStorePersistence(): Promise<void> {
   if (process.env.NODE_ENV === "test" || env.storeDriver !== "prisma") {
     return;
   }
   try {
-    await ensurePrismaReferenceData(snapshotStore());
+    await ensurePrismaReferenceData(prismaBootstrapStore());
     prismaPersistenceError = null;
   } catch (error) {
     prismaPersistenceError = error instanceof Error ? error.message : String(error);

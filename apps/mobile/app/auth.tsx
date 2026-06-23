@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { AUTH_DRIVER, api, setSessionToken, supabaseLogin, supabaseSignup } from "../src/api/client";
+import { AUTH_DRIVER, DEMO_AUTH_ENABLED, api, setSessionToken, supabaseLogin, supabaseSignup } from "../src/api/client";
 import { colors } from "../src/theme/colors";
 
 type AuthMode = "login" | "signup";
@@ -10,9 +10,9 @@ type AuthMode = "login" | "signup";
 export default function AuthScreen() {
   const queryClient = useQueryClient();
   const [mode, setMode] = useState<AuthMode>("login");
-  const [email, setEmail] = useState("demo@macro.local");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("Demo User");
+  const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const usesSupabaseAuth = AUTH_DRIVER === "supabase";
 
@@ -124,7 +124,7 @@ export default function AuthScreen() {
           <Text style={styles.primaryButtonText}>{mode === "signup" ? "Create account" : "Login"}</Text>
         </Pressable>
 
-        {!usesSupabaseAuth ? (
+        {!usesSupabaseAuth && DEMO_AUTH_ENABLED ? (
           <Pressable
             accessibilityLabel="Use demo account"
             disabled={loading}

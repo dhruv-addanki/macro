@@ -47,6 +47,8 @@ import { Platform } from "react-native";
 
 export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:4000";
 export const AUTH_DRIVER = process.env.EXPO_PUBLIC_AUTH_DRIVER === "supabase" ? "supabase" : "local";
+export const DEMO_AUTH_ENABLED = process.env.EXPO_PUBLIC_ENABLE_DEMO_AUTH === "true";
+export const PHOTO_RETENTION_ENABLED = process.env.EXPO_PUBLIC_ENABLE_PHOTO_RETENTION === "true";
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 const SESSION_STORAGE_KEY = "macro.sessionToken";

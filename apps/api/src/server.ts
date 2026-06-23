@@ -1,6 +1,6 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
-import { env } from "./lib/env";
+import { assertValidRuntimeConfig, env } from "./lib/env";
 import { closeStorePersistence, getStorePersistenceStatus, initializeStorePersistence } from "./lib/store";
 import { registerAuthRoutes } from "./routes/auth";
 import { registerAiRoutes } from "./routes/ai";
@@ -14,6 +14,7 @@ import { registerSavedMealRoutes } from "./routes/savedMeals";
 import { registerUserRoutes } from "./routes/users";
 
 export async function buildServer() {
+  assertValidRuntimeConfig();
   await initializeStorePersistence();
 
   const app = Fastify({
@@ -35,6 +36,8 @@ export async function buildServer() {
     ok: true,
     service: "macro-api",
     openaiConfigured: Boolean(env.openaiApiKey),
+    authDriver: env.authDriver,
+    photoStorageDriver: env.photoStorageDriver,
     persistence: getStorePersistenceStatus()
   }));
 
@@ -59,7 +62,7 @@ export async function buildServer() {
       error: isPayloadTooLarge ? "payload_too_large" : statusCode >= 500 ? "internal_error" : "request_error",
       message: isPayloadTooLarge
         ? "Photo upload is too large. Try a smaller image."
-        : env.nodeEnv === "development"
+        : statusCode < 500 || env.nodeEnv === "development"
           ? message
           : "Something went wrong"
     });
@@ -73,5 +76,21 @@ if (process.env.NODE_ENV !== "test") {
   app.addHook("onClose", async () => {
     await closeStorePersistence();
   });
+
+  let closing = false;
+  const shutdown = async (signal: NodeJS.Signals) => {
+    if (closing) return;
+    closing = true;
+    app.log.info({ signal }, "Shutting down Macro API");
+    await app.close();
+  };
+
+  process.once("SIGTERM", () => {
+    void shutdown("SIGTERM");
+  });
+  process.once("SIGINT", () => {
+    void shutdown("SIGINT");
+  });
+
   await app.listen({ port: env.port, host: "0.0.0.0" });
 }

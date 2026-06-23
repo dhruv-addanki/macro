@@ -146,6 +146,10 @@ function s3Bucket(): string {
 }
 
 async function writePhoto(storageKey: string, bytes: Buffer, mimeType: string): Promise<void> {
+  if (env.photoStorageDriver === "disabled") {
+    throw new Error("Retained meal photo storage is disabled");
+  }
+
   if (env.photoStorageDriver === "supabase") {
     const { error } = await getSupabaseClient()
       .storage
@@ -176,6 +180,10 @@ async function writePhoto(storageKey: string, bytes: Buffer, mimeType: string): 
 }
 
 async function removePhoto(storageKey: string): Promise<void> {
+  if (env.photoStorageDriver === "disabled") {
+    return;
+  }
+
   if (env.photoStorageDriver === "supabase") {
     const { error } = await getSupabaseClient()
       .storage
@@ -254,6 +262,7 @@ export async function retainMealPhoto(input: {
   mimeType?: string;
 }): Promise<MealPhoto | undefined> {
   if (!input.retainPhoto || !input.imageBase64) return undefined;
+  if (env.photoStorageDriver === "disabled") return undefined;
 
   const mimeType = normalizeMimeType(input.mimeType);
   if (!isSupportedMimeType(mimeType)) return undefined;
@@ -411,6 +420,8 @@ export async function createMealPhotoAccessForUser(userId: string, id: string, b
   url: string;
   expiresAt: string;
 } | null> {
+  if (env.photoStorageDriver === "disabled") return null;
+
   const mealPhoto = shouldPersistDirectlyToPrisma()
     ? await getMealPhotoFromPrisma(userId, id)
     : store.mealPhotos.find((photo) => photo.userId === userId && photo.id === id && photo.retained);

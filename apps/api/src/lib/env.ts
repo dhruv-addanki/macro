@@ -13,6 +13,13 @@ function numberEnv(name: string, fallback: number): number {
   return Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
+function booleanEnv(name: string, fallback: boolean): boolean {
+  const value = process.env[name]?.trim().toLowerCase();
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return fallback;
+}
+
 function storeDriver(): "json" | "prisma" {
   return process.env.MACRO_STORE_DRIVER === "prisma" ? "prisma" : "json";
 }
@@ -21,8 +28,10 @@ function authDriver(): "local" | "supabase" {
   return process.env.MACRO_AUTH_DRIVER === "supabase" ? "supabase" : "local";
 }
 
-function photoStorageDriver(): "local" | "supabase" | "s3" {
+function photoStorageDriver(): "disabled" | "local" | "supabase" | "s3" {
   switch (process.env.MACRO_PHOTO_STORAGE_DRIVER) {
+    case "disabled":
+      return "disabled";
     case "supabase":
       return "supabase";
     case "s3":
@@ -33,13 +42,16 @@ function photoStorageDriver(): "local" | "supabase" | "s3" {
 }
 
 const photoMaxBytes = numberEnv("MACRO_PHOTO_MAX_BYTES", 8 * 1024 * 1024);
+const nodeEnv = process.env.NODE_ENV ?? "development";
 
 export const env = {
-  nodeEnv: process.env.NODE_ENV ?? "development",
+  nodeEnv,
   port: Number(process.env.PORT ?? 4000),
   databaseUrl: process.env.DATABASE_URL,
   storeDriver: storeDriver(),
   authDriver: authDriver(),
+  allowDemoUser: booleanEnv("MACRO_ALLOW_DEMO_USER", nodeEnv !== "production"),
+  seedDemoUser: booleanEnv("MACRO_SEED_DEMO_USER", nodeEnv !== "production"),
   photoStorageDriver: photoStorageDriver(),
   supabaseUrl: process.env.SUPABASE_URL,
   supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
@@ -68,3 +80,19 @@ export const env = {
   aiMatchSavedLimit: numberEnv("MACRO_AI_MATCH_SAVED_LIMIT", 120),
   aiDailyBudgetUnits: numberEnv("MACRO_AI_DAILY_BUDGET_UNITS", 200)
 };
+
+export function assertValidRuntimeConfig(): void {
+  if (env.nodeEnv !== "production") return;
+
+  const errors: string[] = [];
+  if (env.storeDriver !== "prisma") errors.push("MACRO_STORE_DRIVER must be prisma");
+  if (!env.databaseUrl) errors.push("DATABASE_URL is required");
+  if (!env.openaiApiKey) errors.push("OPENAI_API_KEY is required");
+  if (env.photoStorageDriver === "local") {
+    errors.push("MACRO_PHOTO_STORAGE_DRIVER cannot be local in production; use disabled, supabase, or s3");
+  }
+
+  if (errors.length) {
+    throw new Error(`Invalid production configuration: ${errors.join("; ")}`);
+  }
+}
