@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { AUTH_DRIVER, DEMO_AUTH_ENABLED, api, setSessionToken, supabaseLogin, supabaseSignup } from "../src/api/client";
+import { FormTextInput, KeyboardAwareScrollView } from "../src/components/KeyboardForm";
 import { colors } from "../src/theme/colors";
 
 type AuthMode = "login" | "signup";
@@ -62,7 +63,7 @@ export default function AuthScreen() {
   const missingRequiredInput = !email.trim() || (usesSupabaseAuth && !password.trim());
 
   return (
-    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <KeyboardAwareScrollView contentContainerStyle={styles.content}>
       <View style={styles.panel}>
         <Text style={styles.title}>Macro</Text>
         <Text style={styles.subtitle}>
@@ -82,8 +83,9 @@ export default function AuthScreen() {
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Email</Text>
-          <TextInput
+          <FormTextInput
             autoCapitalize="none"
+            autoComplete="email"
             keyboardType="email-address"
             onChangeText={setEmail}
             placeholder="you@example.com"
@@ -95,7 +97,8 @@ export default function AuthScreen() {
         {usesSupabaseAuth ? (
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Password</Text>
-            <TextInput
+            <FormTextInput
+              autoComplete="password"
               onChangeText={setPassword}
               placeholder="Password"
               secureTextEntry
@@ -108,7 +111,7 @@ export default function AuthScreen() {
         {mode === "signup" ? (
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Display name</Text>
-            <TextInput onChangeText={setDisplayName} placeholder="Name" style={styles.input} value={displayName} />
+            <FormTextInput onChangeText={setDisplayName} placeholder="Name" style={styles.input} value={displayName} />
           </View>
         ) : null}
 
@@ -136,7 +139,7 @@ export default function AuthScreen() {
           </Pressable>
         ) : null}
       </View>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
 

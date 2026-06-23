@@ -2,9 +2,10 @@ import type { AIUsageSummaryResponse, MealGroup, MealPhoto } from "@macro/shared
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, router } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Linking, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { API_URL, api, getSessionToken, setSessionToken } from "../src/api/client";
 import { AppNav } from "../src/components/AppNav";
+import { FormTextInput, KeyboardAwareScrollView } from "../src/components/KeyboardForm";
 import { colors } from "../src/theme/colors";
 
 type GoalDraft = {
@@ -169,7 +170,7 @@ export default function ProfileScreen() {
     deleteMealGroupMutation.isPending;
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
+    <KeyboardAwareScrollView contentContainerStyle={styles.content}>
       <AppNav />
       {meQuery.isLoading ? (
         <ActivityIndicator color={colors.accent} />
@@ -268,7 +269,7 @@ export default function ProfileScreen() {
           <View style={styles.panel}>
             <Text style={styles.title}>Meal groups</Text>
             <View style={styles.inlineRow}>
-              <TextInput
+              <FormTextInput
                 accessibilityLabel="New meal group name"
                 onChangeText={setNewMealGroupName}
                 placeholder="New group"
@@ -342,7 +343,7 @@ export default function ProfileScreen() {
           </View>
         </>
       ) : null}
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
 
@@ -360,7 +361,7 @@ function LabeledInput({
   return (
     <View style={styles.inputGroup}>
       <Text style={styles.label}>{label}</Text>
-      <TextInput keyboardType={keyboardType} onChangeText={onChangeText} style={styles.input} value={value} />
+      <FormTextInput keyboardType={keyboardType} onChangeText={onChangeText} style={styles.input} value={value} />
     </View>
   );
 }
@@ -392,7 +393,7 @@ function MealGroupRow({
   return (
     <View style={styles.mealGroupRow}>
       <View style={styles.mealGroupMain}>
-        <TextInput
+        <FormTextInput
           accessibilityLabel={`${mealGroup.name} meal group name`}
           onChangeText={onChangeName}
           style={styles.input}

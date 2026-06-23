@@ -3,9 +3,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
 import { Check } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { api } from "../../src/api/client";
 import { ConfidenceBadge } from "../../src/components/ConfidenceBadge";
+import { FormTextInput, KeyboardAwareScrollView } from "../../src/components/KeyboardForm";
 import { colors } from "../../src/theme/colors";
 import { todayIso } from "../../src/utils/date";
 
@@ -120,7 +121,7 @@ export default function EditEntryScreen() {
   const mealGroups = meQuery.data?.mealGroups ?? [];
 
   return (
-    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <KeyboardAwareScrollView contentContainerStyle={styles.content}>
       <View style={styles.panel}>
         <View style={styles.headerRow}>
           <View style={styles.headerText}>
@@ -244,7 +245,7 @@ export default function EditEntryScreen() {
           <Text style={styles.saveButtonText}>Save changes</Text>
         </Pressable>
       </View>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
 
@@ -264,7 +265,7 @@ function EditField({
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
-      <TextInput
+      <FormTextInput
         accessibilityLabel={accessibilityLabel}
         keyboardType={keyboardType}
         onChangeText={onChangeText}

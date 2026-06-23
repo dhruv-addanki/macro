@@ -2,9 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Recipe, RecipeIngredient, SavedMeal } from "@macro/shared";
 import { BookMarked, Check, Pencil, Plus, Save, Trash2, X } from "lucide-react-native";
 import { useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { api } from "../src/api/client";
 import { AppNav } from "../src/components/AppNav";
+import { FormTextInput, KeyboardAwareScrollView } from "../src/components/KeyboardForm";
 import { colors } from "../src/theme/colors";
 import { todayIso } from "../src/utils/date";
 
@@ -200,7 +201,7 @@ export default function SavedScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
+    <KeyboardAwareScrollView contentContainerStyle={styles.content}>
       <AppNav />
 
       <View style={styles.panel}>
@@ -247,7 +248,7 @@ export default function SavedScreen() {
 
                     {isEditing ? (
                       <View style={styles.savedMealEditor}>
-                        <TextInput onChangeText={setSavedMealNameDraft} placeholder="Saved meal name" style={styles.input} value={savedMealNameDraft} />
+                        <FormTextInput onChangeText={setSavedMealNameDraft} placeholder="Saved meal name" style={styles.input} value={savedMealNameDraft} />
                         <View style={styles.savedMealEntries}>
                           {meal.entries.map((entry) => {
                             const selected = selectedSavedMealEntryIds.includes(entry.id);
@@ -421,7 +422,7 @@ export default function SavedScreen() {
           )}
         </>
       )}
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
 
@@ -509,10 +510,10 @@ function RecipeBuilder({
   return (
     <View style={styles.builder}>
       <Text style={styles.title}>{title}</Text>
-      <TextInput onChangeText={onChangeName} placeholder="Recipe name" style={styles.input} value={name} />
+      <FormTextInput onChangeText={onChangeName} placeholder="Recipe name" style={styles.input} value={name} />
       <View style={styles.twoCol}>
-        <TextInput keyboardType="number-pad" onChangeText={onChangeServings} placeholder="Servings" style={styles.input} value={servings} />
-        <TextInput
+        <FormTextInput keyboardType="number-pad" onChangeText={onChangeServings} placeholder="Servings" style={styles.input} value={servings} />
+        <FormTextInput
           keyboardType="number-pad"
           onChangeText={onChangeCookedWeight}
           placeholder="Cooked weight g"
@@ -523,20 +524,20 @@ function RecipeBuilder({
 
       <View style={styles.ingredientBox}>
         <Text style={styles.subTitle}>Add ingredient</Text>
-        <TextInput onChangeText={onChangeIngredientName} placeholder="Ingredient name" style={styles.input} value={ingredientName} />
+        <FormTextInput onChangeText={onChangeIngredientName} placeholder="Ingredient name" style={styles.input} value={ingredientName} />
         <View style={styles.twoCol}>
-          <TextInput keyboardType="number-pad" onChangeText={onChangeIngredientGrams} placeholder="Grams" style={styles.input} value={ingredientGrams} />
-          <TextInput keyboardType="number-pad" onChangeText={onChangeIngredientCalories} placeholder="Calories" style={styles.input} value={ingredientCalories} />
+          <FormTextInput keyboardType="number-pad" onChangeText={onChangeIngredientGrams} placeholder="Grams" style={styles.input} value={ingredientGrams} />
+          <FormTextInput keyboardType="number-pad" onChangeText={onChangeIngredientCalories} placeholder="Calories" style={styles.input} value={ingredientCalories} />
         </View>
         <View style={styles.threeCol}>
-          <TextInput keyboardType="number-pad" onChangeText={onChangeIngredientProtein} placeholder="P" style={styles.input} value={ingredientProtein} />
-          <TextInput keyboardType="number-pad" onChangeText={onChangeIngredientCarbs} placeholder="C" style={styles.input} value={ingredientCarbs} />
-          <TextInput keyboardType="number-pad" onChangeText={onChangeIngredientFat} placeholder="F" style={styles.input} value={ingredientFat} />
+          <FormTextInput keyboardType="number-pad" onChangeText={onChangeIngredientProtein} placeholder="P" style={styles.input} value={ingredientProtein} />
+          <FormTextInput keyboardType="number-pad" onChangeText={onChangeIngredientCarbs} placeholder="C" style={styles.input} value={ingredientCarbs} />
+          <FormTextInput keyboardType="number-pad" onChangeText={onChangeIngredientFat} placeholder="F" style={styles.input} value={ingredientFat} />
         </View>
         <View style={styles.threeCol}>
-          <TextInput keyboardType="number-pad" onChangeText={onChangeIngredientSugar} placeholder="Sugar" style={styles.input} value={ingredientSugar} />
-          <TextInput keyboardType="number-pad" onChangeText={onChangeIngredientFiber} placeholder="Fiber" style={styles.input} value={ingredientFiber} />
-          <TextInput keyboardType="number-pad" onChangeText={onChangeIngredientSodium} placeholder="Sodium mg" style={styles.input} value={ingredientSodium} />
+          <FormTextInput keyboardType="number-pad" onChangeText={onChangeIngredientSugar} placeholder="Sugar" style={styles.input} value={ingredientSugar} />
+          <FormTextInput keyboardType="number-pad" onChangeText={onChangeIngredientFiber} placeholder="Fiber" style={styles.input} value={ingredientFiber} />
+          <FormTextInput keyboardType="number-pad" onChangeText={onChangeIngredientSodium} placeholder="Sodium mg" style={styles.input} value={ingredientSodium} />
         </View>
         <Pressable accessibilityLabel="Add recipe ingredient" onPress={onAddIngredient} style={styles.secondaryAction}>
           <Plus color={colors.accentDark} size={16} />

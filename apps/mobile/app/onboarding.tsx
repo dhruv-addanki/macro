@@ -3,8 +3,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { Check } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { api } from "../src/api/client";
+import { FormTextInput, KeyboardAwareScrollView } from "../src/components/KeyboardForm";
 import { colors } from "../src/theme/colors";
 
 type GoalType = CompleteOnboardingRequest["goalType"];
@@ -155,7 +156,7 @@ export default function OnboardingScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <KeyboardAwareScrollView contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <Text style={styles.title}>Set up Macro</Text>
         <Text style={styles.meta}>Profile, goals, and targets</Text>
@@ -223,7 +224,7 @@ export default function OnboardingScreen() {
         {onboardingMutation.isPending ? <ActivityIndicator color="#FFFFFF" /> : <Check color="#FFFFFF" size={18} />}
         <Text style={styles.submitText}>Complete setup</Text>
       </Pressable>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
 
@@ -241,7 +242,7 @@ function LabeledInput({
   return (
     <View style={styles.inputGroup}>
       <Text style={styles.label}>{label}</Text>
-      <TextInput
+      <FormTextInput
         accessibilityLabel={label}
         keyboardType={keyboardType}
         onChangeText={onChangeText}

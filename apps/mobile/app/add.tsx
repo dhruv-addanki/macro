@@ -19,26 +19,20 @@ import {
   ActivityIndicator,
   Alert,
   Image,
-  InputAccessoryView,
-  Keyboard,
-  KeyboardAvoidingView,
   Linking,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
-  type TextInputProps,
   View
 } from "react-native";
 import { PHOTO_RETENTION_ENABLED, api } from "../src/api/client";
 import { ConfidenceBadge } from "../src/components/ConfidenceBadge";
+import { FormTextInput, KeyboardAwareScrollView } from "../src/components/KeyboardForm";
 import { colors } from "../src/theme/colors";
 import { todayIso } from "../src/utils/date";
 
 type Mode = "text" | "photo" | "barcode" | "search";
-const KEYBOARD_ACCESSORY_ID = "macro-keyboard-done";
 const MEAL_PHOTO_MAX_WIDTH = 1280;
 const MEAL_PHOTO_JPEG_QUALITY = 0.65;
 
@@ -464,18 +458,7 @@ export default function AddFoodScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 72 : 0}
-      style={styles.keyboardAvoider}
-    >
-      <ScrollView
-        automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
-        contentContainerStyle={styles.content}
-        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
-        keyboardShouldPersistTaps="handled"
-        onScrollBeginDrag={Keyboard.dismiss}
-      >
+    <KeyboardAwareScrollView contentContainerStyle={styles.content}>
       <View style={styles.modeRow}>
         <ModeButton active={mode === "text"} icon={<Sparkles size={18} color={mode === "text" ? "#FFFFFF" : colors.accentDark} />} label="Type" onPress={() => setMode("text")} />
         <ModeButton active={mode === "photo"} icon={<Camera size={18} color={mode === "photo" ? "#FFFFFF" : colors.accentDark} />} label="Photo" onPress={() => setMode("photo")} />
@@ -837,9 +820,7 @@ export default function AddFoodScreen() {
           onLog={() => logEstimateMutation.mutate()}
         />
       ) : null}
-      </ScrollView>
-      <KeyboardDoneAccessory />
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   );
 }
 
@@ -922,32 +903,6 @@ function SecondaryButton({
       {loading ? <ActivityIndicator color={colors.accentDark} /> : icon}
       <Text style={styles.secondaryButtonText}>{label}</Text>
     </Pressable>
-  );
-}
-
-function FormTextInput(props: TextInputProps) {
-  return (
-    <TextInput
-      blurOnSubmit={props.blurOnSubmit ?? true}
-      inputAccessoryViewID={Platform.OS === "ios" ? KEYBOARD_ACCESSORY_ID : undefined}
-      onSubmitEditing={props.onSubmitEditing ?? Keyboard.dismiss}
-      returnKeyType={props.returnKeyType ?? "done"}
-      {...props}
-    />
-  );
-}
-
-function KeyboardDoneAccessory() {
-  if (Platform.OS !== "ios") return null;
-
-  return (
-    <InputAccessoryView nativeID={KEYBOARD_ACCESSORY_ID}>
-      <View style={styles.keyboardAccessory}>
-        <Pressable accessibilityLabel="Dismiss keyboard" onPress={Keyboard.dismiss} style={styles.keyboardDoneButton}>
-          <Text style={styles.keyboardDoneText}>Done</Text>
-        </Pressable>
-      </View>
-    </InputAccessoryView>
   );
 }
 
@@ -1618,9 +1573,6 @@ function MacroTile({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  keyboardAvoider: {
-    flex: 1
-  },
   content: {
     backgroundColor: colors.background,
     gap: 14,
@@ -1717,24 +1669,6 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     color: colors.accentDark,
     fontSize: 14,
-    fontWeight: "900"
-  },
-  keyboardAccessory: {
-    alignItems: "flex-end",
-    backgroundColor: colors.surface,
-    borderTopColor: colors.border,
-    borderTopWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8
-  },
-  keyboardDoneButton: {
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8
-  },
-  keyboardDoneText: {
-    color: colors.accentDark,
-    fontSize: 15,
     fontWeight: "900"
   },
   buttonDisabled: {

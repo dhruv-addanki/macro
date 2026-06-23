@@ -2,9 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Scale } from "lucide-react-native";
 import type { AnalyticsSummaryResponse } from "@macro/shared";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { api } from "../src/api/client";
 import { AppNav } from "../src/components/AppNav";
+import { FormTextInput, KeyboardAwareScrollView } from "../src/components/KeyboardForm";
 import { colors } from "../src/theme/colors";
 import { todayIso } from "../src/utils/date";
 
@@ -24,7 +25,7 @@ export default function ProgressScreen() {
   const summary = summaryQuery.data;
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
+    <KeyboardAwareScrollView contentContainerStyle={styles.content}>
       <AppNav />
       {summaryQuery.isLoading ? (
         <ActivityIndicator color={colors.accent} />
@@ -45,7 +46,7 @@ export default function ProgressScreen() {
               <Text style={styles.panelTitle}>Weight</Text>
             </View>
             <View style={styles.inputRow}>
-              <TextInput
+              <FormTextInput
                 keyboardType="decimal-pad"
                 onChangeText={setWeightKg}
                 placeholder="kg"
@@ -85,7 +86,7 @@ export default function ProgressScreen() {
           </View>
         </>
       ) : null}
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
 
