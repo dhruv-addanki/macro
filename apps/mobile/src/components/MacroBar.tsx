@@ -8,16 +8,17 @@ type Props = {
   target: number;
   color: string;
   unit?: string;
+  compact?: boolean;
 };
 
-export function MacroBar({ label, value, target, color, unit = "g" }: Props) {
+export function MacroBar({ compact = false, label, value, target, color, unit = "g" }: Props) {
   const progress = target > 0 ? Math.min(1, value / target) : 0;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.row}>
+    <View style={[styles.container, compact && styles.compactContainer]}>
+      <View style={[styles.row, compact && styles.compactRow]}>
         <Text style={styles.label}>{label}</Text>
-        <Text style={styles.value}>
+        <Text style={[styles.value, compact && styles.compactValue]}>
           {Math.round(value)}
           {unit} / {Math.round(target)}
           {unit}
@@ -49,6 +50,15 @@ const styles = StyleSheet.create({
   container: {
     gap: 6
   },
+  compactContainer: {
+    flex: 1,
+    minWidth: 0
+  },
+  compactRow: {
+    alignItems: "flex-start",
+    flexDirection: "column",
+    gap: 3
+  },
   summary: {
     gap: 10
   },
@@ -72,8 +82,11 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 12
   },
+  compactValue: {
+    fontSize: 10
+  },
   track: {
-    backgroundColor: "#ECE6DC",
+    backgroundColor: colors.accentPale,
     borderRadius: 999,
     height: 8,
     overflow: "hidden"

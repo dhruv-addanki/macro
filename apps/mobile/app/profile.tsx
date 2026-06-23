@@ -3,9 +3,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, router } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Linking, Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import { API_URL, api, getSessionToken, setSessionToken } from "../src/api/client";
-import { AppNav } from "../src/components/AppNav";
-import { FormTextInput, KeyboardAwareScrollView } from "../src/components/KeyboardForm";
+import { API_URL, PHOTO_RETENTION_ENABLED, api, getSessionToken, setSessionToken } from "../src/api/client";
+import { FormTextInput } from "../src/components/KeyboardForm";
+import { TabScreen } from "../src/components/TabScreen";
 import { colors } from "../src/theme/colors";
 
 type GoalDraft = {
@@ -28,7 +28,11 @@ export default function ProfileScreen() {
   const meQuery = useQuery({ queryKey: ["me"], queryFn: api.getMe });
   const authSessionQuery = useQuery({ queryKey: ["auth-session"], queryFn: api.getAuthSession });
   const aiUsageQuery = useQuery({ queryKey: ["ai-usage"], queryFn: api.getAiUsage });
-  const mealPhotosQuery = useQuery({ queryKey: ["meal-photos"], queryFn: api.getMealPhotos });
+  const mealPhotosQuery = useQuery({
+    queryKey: ["meal-photos"],
+    queryFn: api.getMealPhotos,
+    enabled: PHOTO_RETENTION_ENABLED
+  });
   const [displayName, setDisplayName] = useState("");
   const [goalDraft, setGoalDraft] = useState<GoalDraft>({
     calories: "",
@@ -170,8 +174,11 @@ export default function ProfileScreen() {
     deleteMealGroupMutation.isPending;
 
   return (
-    <KeyboardAwareScrollView contentContainerStyle={styles.content}>
-      <AppNav />
+    <TabScreen keyboardAware contentContainerStyle={styles.content}>
+      <View>
+        <Text style={styles.eyebrow}>Settings</Text>
+        <Text style={styles.pageTitle}>Profile</Text>
+      </View>
       {meQuery.isLoading ? (
         <ActivityIndicator color={colors.accent} />
       ) : meQuery.data ? (
@@ -316,34 +323,36 @@ export default function ProfileScreen() {
             )}
           </View>
 
-          <View style={styles.panel}>
-            <Text style={styles.title}>Retained meal photos</Text>
-            {mealPhotosQuery.isLoading ? (
-              <ActivityIndicator color={colors.accent} />
-            ) : (mealPhotosQuery.data?.mealPhotos ?? []).length === 0 ? (
-              <Text style={styles.meta}>No retained photos.</Text>
-            ) : (
-              <View style={styles.photoList}>
-                {(mealPhotosQuery.data?.mealPhotos ?? []).map((photo) => (
-                  <RetainedPhotoRow
-                    key={photo.id}
-                    deleting={deletingPhotoId === photo.id}
-                    opening={openingPhotoId === photo.id}
-                    onDelete={() => {
-                      void deleteRetainedPhoto(photo.id);
-                    }}
-                    onOpen={() => {
-                      void openRetainedPhoto(photo.id);
-                    }}
-                    photo={photo}
-                  />
-                ))}
-              </View>
-            )}
-          </View>
+          {PHOTO_RETENTION_ENABLED ? (
+            <View style={styles.panel}>
+              <Text style={styles.title}>Retained meal photos</Text>
+              {mealPhotosQuery.isLoading ? (
+                <ActivityIndicator color={colors.accent} />
+              ) : (mealPhotosQuery.data?.mealPhotos ?? []).length === 0 ? (
+                <Text style={styles.meta}>No retained photos.</Text>
+              ) : (
+                <View style={styles.photoList}>
+                  {(mealPhotosQuery.data?.mealPhotos ?? []).map((photo) => (
+                    <RetainedPhotoRow
+                      key={photo.id}
+                      deleting={deletingPhotoId === photo.id}
+                      opening={openingPhotoId === photo.id}
+                      onDelete={() => {
+                        void deleteRetainedPhoto(photo.id);
+                      }}
+                      onOpen={() => {
+                        void openRetainedPhoto(photo.id);
+                      }}
+                      photo={photo}
+                    />
+                  ))}
+                </View>
+              )}
+            </View>
+          ) : null}
         </>
       ) : null}
-    </KeyboardAwareScrollView>
+    </TabScreen>
   );
 }
 
@@ -577,10 +586,20 @@ function formatResetTime(value: string): string {
 
 const styles = StyleSheet.create({
   content: {
-    backgroundColor: colors.background,
     gap: 16,
-    padding: 16,
-    paddingBottom: 48
+    padding: 18,
+    paddingTop: 14
+  },
+  eyebrow: {
+    color: colors.muted,
+    fontSize: 13,
+    fontWeight: "700"
+  },
+  pageTitle: {
+    color: colors.text,
+    fontSize: 31,
+    fontWeight: "900",
+    marginTop: 1
   },
   panel: {
     backgroundColor: colors.surface,
@@ -604,7 +623,7 @@ const styles = StyleSheet.create({
     fontWeight: "800"
   },
   input: {
-    backgroundColor: "#FBFAF7",
+    backgroundColor: colors.surfaceMuted,
     borderColor: colors.border,
     borderRadius: 8,
     borderWidth: 1,
@@ -668,7 +687,7 @@ const styles = StyleSheet.create({
   },
   iconTextButton: {
     alignItems: "center",
-    backgroundColor: "#E6F0F3",
+    backgroundColor: colors.accentSoft,
     borderRadius: 8,
     justifyContent: "center",
     minHeight: 36,
@@ -767,7 +786,7 @@ const styles = StyleSheet.create({
   },
   openButton: {
     alignItems: "center",
-    backgroundColor: "#E6F0F3",
+    backgroundColor: colors.accentSoft,
     borderRadius: 8,
     justifyContent: "center",
     paddingHorizontal: 10,
@@ -821,7 +840,7 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     alignItems: "center",
-    backgroundColor: "#E6F0F3",
+    backgroundColor: colors.accentSoft,
     borderRadius: 8,
     minHeight: 44,
     justifyContent: "center",

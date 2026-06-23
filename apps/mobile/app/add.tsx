@@ -41,7 +41,7 @@ export default function AddFoodScreen() {
   const date = params.date ?? todayIso();
   const mealGroupId = params.mealGroupId ?? "meal_lunch";
   const queryClient = useQueryClient();
-  const [mode, setMode] = useState<Mode>("text");
+  const [mode, setMode] = useState<Mode>("photo");
   const [text, setText] = useState("");
   const [photoContext, setPhotoContext] = useState("");
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -460,9 +460,9 @@ export default function AddFoodScreen() {
   return (
     <KeyboardAwareScrollView contentContainerStyle={styles.content}>
       <View style={styles.modeRow}>
-        <ModeButton active={mode === "text"} icon={<Sparkles size={18} color={mode === "text" ? "#FFFFFF" : colors.accentDark} />} label="Type" onPress={() => setMode("text")} />
         <ModeButton active={mode === "photo"} icon={<Camera size={18} color={mode === "photo" ? "#FFFFFF" : colors.accentDark} />} label="Photo" onPress={() => setMode("photo")} />
         <ModeButton active={mode === "barcode"} icon={<Barcode size={18} color={mode === "barcode" ? "#FFFFFF" : colors.accentDark} />} label="Barcode" onPress={() => setMode("barcode")} />
+        <ModeButton active={mode === "text"} icon={<Sparkles size={18} color={mode === "text" ? "#FFFFFF" : colors.accentDark} />} label="Type" onPress={() => setMode("text")} />
         <ModeButton active={mode === "search"} icon={<Search size={18} color={mode === "search" ? "#FFFFFF" : colors.accentDark} />} label="Search" onPress={() => setMode("search")} />
       </View>
 
@@ -1626,7 +1626,7 @@ const styles = StyleSheet.create({
     fontSize: 13
   },
   input: {
-    backgroundColor: "#FBFAF7",
+    backgroundColor: colors.surfaceMuted,
     borderColor: colors.border,
     borderRadius: 8,
     borderWidth: 1,
@@ -1657,7 +1657,7 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     alignItems: "center",
-    backgroundColor: "#E6F0F3",
+    backgroundColor: colors.accentSoft,
     borderRadius: 8,
     flexDirection: "row",
     gap: 8,
@@ -1704,7 +1704,7 @@ const styles = StyleSheet.create({
   },
   toggleBox: {
     alignItems: "center",
-    backgroundColor: "#FBFAF7",
+    backgroundColor: colors.surfaceMuted,
     borderColor: colors.border,
     borderRadius: 6,
     borderWidth: 1,
@@ -1764,7 +1764,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between"
   },
   memoryPanel: {
-    backgroundColor: "#F7F4EF",
+    backgroundColor: colors.background,
     borderColor: colors.border,
     borderRadius: 8,
     borderWidth: 1,
@@ -1807,7 +1807,7 @@ const styles = StyleSheet.create({
   },
   favoriteButton: {
     alignItems: "center",
-    backgroundColor: "#E6F0F3",
+    backgroundColor: colors.accentSoft,
     borderRadius: 8,
     height: 34,
     justifyContent: "center",
@@ -1843,7 +1843,7 @@ const styles = StyleSheet.create({
     fontWeight: "900"
   },
   customFoodBox: {
-    backgroundColor: "#F7F4EF",
+    backgroundColor: colors.background,
     borderColor: colors.border,
     borderRadius: 8,
     borderWidth: 1,
@@ -1861,7 +1861,7 @@ const styles = StyleSheet.create({
     minWidth: 0
   },
   editPanel: {
-    backgroundColor: "#F7F4EF",
+    backgroundColor: colors.background,
     borderColor: colors.border,
     borderRadius: 8,
     borderWidth: 1,
@@ -1895,7 +1895,7 @@ const styles = StyleSheet.create({
     gap: 8
   },
   macroTile: {
-    backgroundColor: "#F7F4EF",
+    backgroundColor: colors.background,
     borderColor: colors.border,
     borderRadius: 8,
     borderWidth: 1,
@@ -1928,7 +1928,7 @@ const styles = StyleSheet.create({
     gap: 8
   },
   quickEdit: {
-    backgroundColor: "#F7F4EF",
+    backgroundColor: colors.background,
     borderColor: colors.border,
     borderRadius: 999,
     borderWidth: 1,
@@ -1954,7 +1954,7 @@ const styles = StyleSheet.create({
     padding: 10
   },
   unitChipActive: {
-    backgroundColor: "#E6F0F3",
+    backgroundColor: colors.accentSoft,
     borderColor: colors.accent
   },
   unitText: {

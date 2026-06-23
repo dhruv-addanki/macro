@@ -4,7 +4,6 @@ import { BookMarked, Check, Pencil, Plus, Save, Trash2, X } from "lucide-react-n
 import { useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { api } from "../src/api/client";
-import { AppNav } from "../src/components/AppNav";
 import { FormTextInput, KeyboardAwareScrollView } from "../src/components/KeyboardForm";
 import { colors } from "../src/theme/colors";
 import { todayIso } from "../src/utils/date";
@@ -202,8 +201,6 @@ export default function SavedScreen() {
 
   return (
     <KeyboardAwareScrollView contentContainerStyle={styles.content}>
-      <AppNav />
-
       <View style={styles.panel}>
         <Text style={styles.title}>Log to</Text>
         <View style={styles.chipRow}>
@@ -610,7 +607,7 @@ const styles = StyleSheet.create({
     padding: 14
   },
   input: {
-    backgroundColor: "#FBFAF7",
+    backgroundColor: colors.surfaceMuted,
     borderColor: colors.border,
     borderRadius: 8,
     borderWidth: 1,
@@ -630,7 +627,7 @@ const styles = StyleSheet.create({
     gap: 8
   },
   ingredientBox: {
-    backgroundColor: "#F7F4EF",
+    backgroundColor: colors.background,
     borderColor: colors.border,
     borderRadius: 8,
     borderWidth: 1,
@@ -644,7 +641,7 @@ const styles = StyleSheet.create({
   },
   secondaryAction: {
     alignItems: "center",
-    backgroundColor: "#E6F0F3",
+    backgroundColor: colors.accentSoft,
     borderRadius: 8,
     flexDirection: "row",
     gap: 7,
@@ -703,7 +700,7 @@ const styles = StyleSheet.create({
     gap: 8
   },
   chip: {
-    backgroundColor: "#F7F4EF",
+    backgroundColor: colors.background,
     borderColor: colors.border,
     borderRadius: 999,
     borderWidth: 1,
@@ -797,7 +794,7 @@ const styles = StyleSheet.create({
   },
   entryToggle: {
     alignItems: "center",
-    backgroundColor: "#FBFAF7",
+    backgroundColor: colors.surfaceMuted,
     borderColor: colors.border,
     borderRadius: 8,
     borderWidth: 1,

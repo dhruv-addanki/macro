@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase"
   },
   input: {
-    backgroundColor: "#FBFAF7",
+    backgroundColor: colors.surfaceMuted,
     borderColor: colors.border,
     borderRadius: 8,
     borderWidth: 1,
@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
     gap: 8
   },
   segment: {
-    backgroundColor: "#FBFAF7",
+    backgroundColor: colors.surfaceMuted,
     borderColor: colors.border,
     borderRadius: 8,
     borderWidth: 1,

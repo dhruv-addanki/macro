@@ -1,17 +1,21 @@
 export const colors = {
-  background: "#F7F4EF",
+  background: "#EEF7F0",
+  backgroundStrong: "#E1F0E5",
   surface: "#FFFFFF",
-  text: "#171717",
-  muted: "#6F6A61",
-  border: "#E1DCD3",
-  protein: "#247A5B",
-  carbs: "#C77D2E",
-  fat: "#A8463D",
-  accent: "#1B6D8F",
-  accentDark: "#124B63",
-  success: "#247A5B",
-  warning: "#C77D2E",
-  danger: "#A8463D"
+  surfaceMuted: "#F6FBF7",
+  text: "#10261B",
+  muted: "#64756B",
+  border: "#D4E6D8",
+  protein: "#087A49",
+  carbs: "#58A66D",
+  fat: "#9BC8A6",
+  accent: "#087A49",
+  accentDark: "#075735",
+  accentSoft: "#DDF1E3",
+  accentPale: "#EAF6ED",
+  success: "#1D8A55",
+  warning: "#B27A24",
+  danger: "#B34B45"
 };
 
 export const spacing = {

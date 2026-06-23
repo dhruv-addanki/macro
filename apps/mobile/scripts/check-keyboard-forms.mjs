@@ -18,8 +18,11 @@ async function visit(directory) {
     if (source.includes("<TextInput")) {
       failures.push(`${label}: use FormTextInput instead of raw TextInput`);
     }
-    if (source.includes("<FormTextInput") && !source.includes("<KeyboardAwareScrollView")) {
-      failures.push(`${label}: FormTextInput must be inside KeyboardAwareScrollView`);
+    const hasKeyboardSafeContainer =
+      source.includes("<KeyboardAwareScrollView") ||
+      (source.includes("<TabScreen") && source.includes("keyboardAware"));
+    if (source.includes("<FormTextInput") && !hasKeyboardSafeContainer) {
+      failures.push(`${label}: FormTextInput must be inside a keyboard-safe screen`);
     }
   }
 }

@@ -17,11 +17,10 @@ export function MealSection({ meal, date, onDeleteEntry, onDuplicateEntry, onSav
   return (
     <View style={styles.section}>
       <View style={styles.header}>
-        <View>
+        <View style={styles.headerCopy}>
           <Text style={styles.title}>{meal.mealGroup.name}</Text>
           <Text style={styles.subtotal}>
-            {Math.round(meal.totals.calories)} cal · P {Math.round(meal.totals.proteinG)}g · C{" "}
-            {Math.round(meal.totals.carbsG)}g · F {Math.round(meal.totals.fatG)}g
+            {Math.round(meal.totals.calories)} cal · {meal.entries.length} item(s)
           </Text>
         </View>
         <View style={styles.headerActions}>
@@ -46,7 +45,18 @@ export function MealSection({ meal, date, onDeleteEntry, onDuplicateEntry, onSav
 
       <View style={styles.entries}>
         {meal.entries.length === 0 ? (
-          <Text style={styles.empty}>No entries</Text>
+          <Link
+            asChild
+            href={{
+              pathname: "/add",
+              params: { mealGroupId: meal.mealGroup.id, date }
+            }}
+          >
+            <Pressable accessibilityLabel={`Add food to ${meal.mealGroup.name}`} style={styles.emptyAction}>
+              <Plus color={colors.accent} size={18} />
+              <Text style={styles.empty}>Add {meal.mealGroup.name.toLowerCase()}</Text>
+            </Pressable>
+          </Link>
         ) : (
           meal.entries.map((entry) => (
             <FoodEntryRow
@@ -65,7 +75,12 @@ export function MealSection({ meal, date, onDeleteEntry, onDuplicateEntry, onSav
 
 const styles = StyleSheet.create({
   section: {
-    gap: 10
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 10,
+    padding: 14
   },
   header: {
     alignItems: "center",
@@ -75,6 +90,10 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: "row",
     gap: 8
+  },
+  headerCopy: {
+    flex: 1,
+    minWidth: 0
   },
   title: {
     color: colors.text,
@@ -88,7 +107,7 @@ const styles = StyleSheet.create({
   },
   addButton: {
     alignItems: "center",
-    backgroundColor: "#E6F0F3",
+    backgroundColor: colors.accentSoft,
     borderRadius: 8,
     height: 36,
     justifyContent: "center",
@@ -97,9 +116,18 @@ const styles = StyleSheet.create({
   entries: {
     gap: 8
   },
+  emptyAction: {
+    alignItems: "center",
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: 8,
+    flexDirection: "row",
+    gap: 8,
+    minHeight: 48,
+    paddingHorizontal: 12
+  },
   empty: {
-    color: colors.muted,
+    color: colors.accentDark,
     fontSize: 13,
-    paddingVertical: 4
+    fontWeight: "800"
   }
 });

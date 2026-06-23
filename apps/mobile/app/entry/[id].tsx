@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase"
   },
   input: {
-    backgroundColor: "#FBFAF7",
+    backgroundColor: colors.surfaceMuted,
     borderColor: colors.border,
     borderRadius: 8,
     borderWidth: 1,
@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
     paddingVertical: 9
   },
   chipActive: {
-    backgroundColor: "#E6F0F3",
+    backgroundColor: colors.accentSoft,
     borderColor: colors.accent
   },
   chipText: {

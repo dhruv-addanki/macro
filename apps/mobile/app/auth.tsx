@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     fontWeight: "700"
   },
   segmented: {
-    backgroundColor: "#E6F0F3",
+    backgroundColor: colors.accentSoft,
     borderRadius: 8,
     flexDirection: "row",
     gap: 6,
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     fontWeight: "800"
   },
   input: {
-    backgroundColor: "#FBFAF7",
+    backgroundColor: colors.surfaceMuted,
     borderColor: colors.border,
     borderRadius: 8,
     borderWidth: 1,
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     alignItems: "center",
-    backgroundColor: "#E6F0F3",
+    backgroundColor: colors.accentSoft,
     borderRadius: 8,
     flexDirection: "row",
     gap: 8,

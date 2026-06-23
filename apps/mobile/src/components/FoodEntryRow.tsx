@@ -58,10 +58,8 @@ export function FoodEntryRow({ date, entry, onDelete, onDuplicate }: Props) {
 const styles = StyleSheet.create({
   row: {
     alignItems: "flex-start",
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 8,
-    borderWidth: 1,
     flexDirection: "row",
     justifyContent: "space-between",
     padding: 12
@@ -111,7 +109,7 @@ const styles = StyleSheet.create({
   },
   iconAction: {
     alignItems: "center",
-    backgroundColor: "#F7F4EF",
+    backgroundColor: colors.accentPale,
     borderRadius: 8,
     height: 28,
     justifyContent: "center",

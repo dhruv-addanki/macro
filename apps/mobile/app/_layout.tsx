@@ -56,19 +56,20 @@ export default function RootLayout() {
       <Stack
         screenOptions={{
           headerShadowVisible: false,
-          headerStyle: { backgroundColor: "#F7F4EF" },
-          headerTitleStyle: { color: "#171717", fontWeight: "700" },
-          contentStyle: { backgroundColor: "#F7F4EF" }
+          headerStyle: { backgroundColor: "#EEF7F0" },
+          headerTitleStyle: { color: "#10261B", fontWeight: "800" },
+          contentStyle: { backgroundColor: "#EEF7F0" }
         }}
       >
-        <Stack.Screen name="auth" options={{ title: "Login" }} />
-        <Stack.Screen name="index" options={{ title: "Macro" }} />
+        <Stack.Screen name="auth" options={{ headerShown: false }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="add" options={{ title: "Add food", presentation: "modal" }} />
         <Stack.Screen name="entry/[id]" options={{ title: "Edit entry" }} />
         <Stack.Screen name="onboarding" options={{ title: "Setup" }} />
         <Stack.Screen name="saved" options={{ title: "Saved" }} />
-        <Stack.Screen name="progress" options={{ title: "Progress" }} />
-        <Stack.Screen name="profile" options={{ title: "Profile" }} />
+        <Stack.Screen name="progress" options={{ headerShown: false }} />
+        <Stack.Screen name="my-diet" options={{ headerShown: false }} />
+        <Stack.Screen name="profile" options={{ headerShown: false }} />
       </Stack>
       <AuthRouteGuard />
       <ProfileReturnHandler />
@@ -103,35 +104,35 @@ function ProfileReturnHandler() {
 const styles = StyleSheet.create({
   loadingScreen: {
     alignItems: "center",
-    backgroundColor: "#F7F4EF",
+    backgroundColor: "#EEF7F0",
     flex: 1,
     justifyContent: "center"
   },
   loadingTitle: {
-    color: "#171717",
+    color: "#10261B",
     fontSize: 24,
     fontWeight: "900"
   },
   errorScreen: {
     alignItems: "flex-start",
-    backgroundColor: "#F7F4EF",
+    backgroundColor: "#EEF7F0",
     flex: 1,
     gap: 12,
     justifyContent: "center",
     padding: 24
   },
   errorTitle: {
-    color: "#171717",
+    color: "#10261B",
     fontSize: 22,
     fontWeight: "900"
   },
   errorText: {
-    color: "#6F6A61",
+    color: "#64756B",
     fontSize: 14,
     lineHeight: 20
   },
   retryButton: {
-    backgroundColor: "#1B6D8F",
+    backgroundColor: "#087A49",
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 11
