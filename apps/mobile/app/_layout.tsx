@@ -3,7 +3,7 @@ import { router, Stack, useGlobalSearchParams, usePathname } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { hasSessionToken, hydrateSessionToken } from "../src/api/client";
+import { api, hasSessionToken, hydrateSessionToken, setSessionToken } from "../src/api/client";
 
 export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
   return (
@@ -23,9 +23,20 @@ export default function RootLayout() {
 
   useEffect(() => {
     let mounted = true;
-    void hydrateSessionToken().finally(() => {
+    void (async () => {
+      const token = await hydrateSessionToken();
+      if (token) {
+        try {
+          const session = await api.getAuthSession();
+          if (!session.authenticated) {
+            await setSessionToken(null);
+          }
+        } catch {
+          // Keep the session during transient network failures so retry remains possible.
+        }
+      }
       if (mounted) setSessionReady(true);
-    });
+    })();
     return () => {
       mounted = false;
     };
