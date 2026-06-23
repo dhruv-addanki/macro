@@ -29,6 +29,8 @@ Planning docs:
 
 Local runtime note: the API defaults to the JSON development store for fast local work. Set `MACRO_STORE_DRIVER=prisma` with `DATABASE_URL` to apply the committed migrations, seed reference foods/user defaults, write auth/session, profile/onboarding, meal groups, diary entries, food/favorites, saved meals, recipes, retained-photo metadata, progress weight entries, AI estimate/correction history, analytics events, and AI usage events directly through Prisma, and read the core mobile/auth/barcode screens directly from Prisma. Whole-store snapshot persistence is disabled in Prisma mode so missing repository paths fail fast.
 
+Environment note: the API loads `.env` from the repo root and then `apps/api/.env` if present. Keep `OPENAI_API_KEY`, storage service-role keys, and database credentials API-side; Expo should only receive `EXPO_PUBLIC_*` values.
+
 Mobile runtime note: the Expo app is the primary client. It supports iOS, Android, and web for development, with native camera/photo-library and barcode flows wired through the backend. Local auth session tokens or Supabase access/refresh session data persist through Expo SecureStore on native builds and browser storage on web. API keys, OpenAI credentials, and Supabase service-role credentials stay server-side; only the Supabase anon key is exposed through `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
 
 Credential checks: after filling real OpenAI values, run `npm run check:openai` to validate the configured text, correction, barcode-unit, and photo model routes. After filling real Supabase Storage values, run `MACRO_PHOTO_STORAGE_DRIVER=supabase npm run check:supabase-storage -w @macro/api`.

@@ -52,9 +52,16 @@ export async function buildServer() {
   app.setErrorHandler((error, _request, reply) => {
     app.log.error(error);
     const message = error instanceof Error ? error.message : "Unknown error";
-    reply.status(500).send({
-      error: "internal_error",
-      message: env.nodeEnv === "development" ? message : "Something went wrong"
+    const errorStatusCode = (error as { statusCode?: unknown }).statusCode;
+    const statusCode = typeof errorStatusCode === "number" ? errorStatusCode : 500;
+    const isPayloadTooLarge = statusCode === 413;
+    reply.status(statusCode).send({
+      error: isPayloadTooLarge ? "payload_too_large" : statusCode >= 500 ? "internal_error" : "request_error",
+      message: isPayloadTooLarge
+        ? "Photo upload is too large. Try a smaller image."
+        : env.nodeEnv === "development"
+          ? message
+          : "Something went wrong"
     });
   });
 

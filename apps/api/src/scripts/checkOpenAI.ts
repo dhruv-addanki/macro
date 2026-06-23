@@ -1,8 +1,9 @@
 import OpenAI from "openai";
 import { env } from "../lib/env";
+import { estimatePhotoMeal } from "../modules/ai/service";
 
 const ONE_PIXEL_PNG_BASE64 =
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=";
+  "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAeUlEQVR4nO3PwQkAIBDAsBvMsV3Nv0P4CEKhA6Rz9vq64YIGtKABLWhACxrQgga0oAEtaEALGtCCBrSgAS1oQAsa0IIGtKABLWhACxrQgga0oAEtaEALGtCCBrSgAS1oQAsa0IIGtKABLWhACxrQgga0oAEtaEALHrucwFHDBqK/oAAAAABJRU5ErkJggg==";
 
 type CheckResult = {
   name: string;
@@ -72,6 +73,26 @@ async function runPhotoCheck(client: OpenAI, model: string): Promise<CheckResult
   return { name: "photo", model, ok: true, outputText: text };
 }
 
+async function runPhotoEstimateCheck(model: string): Promise<CheckResult> {
+  const response = await estimatePhotoMeal("openai_check_user", {
+    context: "chicken nuggets with spicy mayo",
+    imageBase64: ONE_PIXEL_PNG_BASE64,
+    mimeType: "image/png",
+    retainPhoto: false
+  });
+
+  if (response.usedFallback) {
+    throw new Error(`meal-photo-estimate used fallback: ${response.estimate.assumptions[0] ?? "unknown reason"}`);
+  }
+
+  return {
+    name: "meal-photo-estimate",
+    model,
+    ok: true,
+    outputText: response.estimate.dishName
+  };
+}
+
 if (!env.openaiApiKey) {
   fail("OPENAI_API_KEY is required for npm run check:openai.");
 }
@@ -90,14 +111,15 @@ if (requiredModels.length > 0) {
 const client = new OpenAI({ apiKey: env.openaiApiKey });
 
 try {
-  const [text, correction, barcodeUnits, photo] = await Promise.all([
+  const [text, correction, barcodeUnits, photo, photoEstimate] = await Promise.all([
     runTextCheck(client, "text", env.aiTextModel),
     runTextCheck(client, "correction", env.aiCorrectionModel),
     runTextCheck(client, "barcode-units", env.aiBarcodeUnitModel),
-    runPhotoCheck(client, env.aiPhotoModel)
+    runPhotoCheck(client, env.aiPhotoModel),
+    runPhotoEstimateCheck(env.aiPhotoModel)
   ]);
 
-  console.log(JSON.stringify({ ok: true, checks: [text, correction, barcodeUnits, photo] }, null, 2));
+  console.log(JSON.stringify({ ok: true, checks: [text, correction, barcodeUnits, photo, photoEstimate] }, null, 2));
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
   process.exit(1);

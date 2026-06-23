@@ -9,6 +9,7 @@ import type {
 } from "@macro/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from "expo-camera";
+import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import { Barcode, Camera, Check, Pencil, Plus, Search, Sparkles, Star, Utensils } from "lucide-react-native";
@@ -16,7 +17,10 @@ import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
+  Linking,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -30,6 +34,8 @@ import { colors } from "../src/theme/colors";
 import { todayIso } from "../src/utils/date";
 
 type Mode = "text" | "photo" | "barcode" | "search";
+const MEAL_PHOTO_MAX_WIDTH = 1280;
+const MEAL_PHOTO_JPEG_QUALITY = 0.65;
 
 export default function AddFoodScreen() {
   const params = useLocalSearchParams<{ date?: string; mealGroupId?: string }>();
@@ -43,6 +49,7 @@ export default function AddFoodScreen() {
   const [imageBase64, setImageBase64] = useState<string | undefined>();
   const [photoMimeType, setPhotoMimeType] = useState("image/jpeg");
   const [photoSource, setPhotoSource] = useState<"camera" | "library">("library");
+  const [photoPermissionError, setPhotoPermissionError] = useState<string | null>(null);
   const [retainPhoto, setRetainPhoto] = useState(false);
   const [retainedPhoto, setRetainedPhoto] = useState<MealPhoto | null>(null);
   const [barcode, setBarcode] = useState("");
@@ -116,8 +123,9 @@ export default function AddFoodScreen() {
   });
 
   const photoEstimateMutation = useMutation({
-    mutationFn: () =>
-      api.estimatePhotoMeal({
+    mutationFn: () => {
+      if (!imageBase64) throw new Error("Take or choose a meal photo first.");
+      return api.estimatePhotoMeal({
         context: photoContext,
         imageBase64,
         date,
@@ -125,7 +133,11 @@ export default function AddFoodScreen() {
         mimeType: photoMimeType,
         photoSource,
         retainPhoto
-      }),
+      });
+    },
+    onMutate: () => {
+      setPhotoPermissionError(null);
+    },
     onSuccess: async (response) => {
       setEstimate(response.estimate);
       setEstimateId(response.estimateId);
@@ -134,6 +146,9 @@ export default function AddFoodScreen() {
       if (response.mealPhoto) {
         await queryClient.invalidateQueries({ queryKey: ["meal-photos"] });
       }
+    },
+    onError: (error) => {
+      setPhotoPermissionError(error instanceof Error ? error.message : "Could not analyze the meal photo.");
     }
   });
 
@@ -397,6 +412,7 @@ export default function AddFoodScreen() {
   );
 
   const parsedBarcodeQuantity = Number(barcodeQuantity);
+  const hasMealPhoto = Boolean(imageBase64);
   const canLogBarcodeFood = Boolean(
     barcodeResult?.food &&
       selectedUnitId &&
@@ -406,18 +422,42 @@ export default function AddFoodScreen() {
   );
 
   async function pickMealPhoto(useCamera: boolean) {
-    const result = useCamera
-      ? await ImagePicker.launchCameraAsync({ base64: true, quality: 0.55 })
-      : await ImagePicker.launchImageLibraryAsync({ base64: true, quality: 0.55 });
+    try {
+      if (useCamera) {
+        const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+        if (!cameraPermission.granted) {
+          const message = cameraPermission.canAskAgain
+            ? "Camera permission is required to photograph a meal."
+            : "Camera access is disabled. Enable it for Expo Go in iOS Settings.";
+          setPhotoPermissionError(message);
+          if (!cameraPermission.canAskAgain && Platform.OS !== "web") {
+            Alert.alert("Camera access required", message, [
+              { text: "Cancel", style: "cancel" },
+              { text: "Open Settings", onPress: () => void Linking.openSettings() }
+            ]);
+          }
+          return;
+        }
+      }
 
-    if (!result.canceled) {
-      const asset = result.assets[0];
-      if (!asset) return;
-      setPhotoUri(asset.uri);
-      setImageBase64(asset.base64 ?? undefined);
-      setPhotoMimeType(asset.mimeType ?? "image/jpeg");
-      setPhotoSource(useCamera ? "camera" : "library");
-      setRetainedPhoto(null);
+      setPhotoPermissionError(null);
+      const result = useCamera
+        ? await ImagePicker.launchCameraAsync({ base64: false, mediaTypes: ["images"], quality: 0.8 })
+        : await ImagePicker.launchImageLibraryAsync({ base64: false, mediaTypes: ["images"], quality: 0.8 });
+
+      if (!result.canceled) {
+        const asset = result.assets[0];
+        if (!asset) return;
+        const resized = await resizeMealPhoto(asset);
+        setPhotoUri(resized.uri);
+        setImageBase64(resized.base64);
+        setPhotoMimeType("image/jpeg");
+        setPhotoSource(useCamera ? "camera" : "library");
+        setRetainedPhoto(null);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not open the camera or photo library.";
+      setPhotoPermissionError(message);
     }
   }
 
@@ -492,6 +532,7 @@ export default function AddFoodScreen() {
             <SecondaryButton icon={<Camera color={colors.accentDark} size={18} />} label="Camera" onPress={() => pickMealPhoto(true)} />
             <SecondaryButton icon={<Utensils color={colors.accentDark} size={18} />} label="Library" onPress={() => pickMealPhoto(false)} />
           </View>
+          {photoPermissionError ? <Text style={styles.permissionError}>{photoPermissionError}</Text> : null}
           {photoUri ? <Image source={{ uri: photoUri }} style={styles.photoPreview} /> : null}
           <Pressable
             accessibilityLabel="Retain meal photo"
@@ -514,7 +555,7 @@ export default function AddFoodScreen() {
             value={photoContext}
           />
           <PrimaryButton
-            disabled={!photoContext.trim() || currentLoading}
+            disabled={!photoContext.trim() || !hasMealPhoto || currentLoading}
             icon={<Sparkles color="#FFFFFF" size={18} />}
             label="Analyze meal"
             loading={photoEstimateMutation.isPending}
@@ -809,6 +850,24 @@ function ModeButton({ active, icon, label, onPress }: { active: boolean; icon: R
 
 function Panel({ children }: { children: ReactNode }) {
   return <View style={styles.panel}>{children}</View>;
+}
+
+async function resizeMealPhoto(asset: ImagePicker.ImagePickerAsset): Promise<{ base64: string; uri: string }> {
+  const actions = asset.width > MEAL_PHOTO_MAX_WIDTH ? [{ resize: { width: MEAL_PHOTO_MAX_WIDTH } }] : [];
+  const result = await ImageManipulator.manipulateAsync(asset.uri, actions, {
+    base64: true,
+    compress: MEAL_PHOTO_JPEG_QUALITY,
+    format: ImageManipulator.SaveFormat.JPEG
+  });
+
+  if (!result.base64) {
+    throw new Error("Could not prepare the meal photo for upload.");
+  }
+
+  return {
+    base64: result.base64,
+    uri: result.uri
+  };
 }
 
 function formatPhotoSize(byteLength?: number | null): string {
@@ -1670,6 +1729,12 @@ const styles = StyleSheet.create({
     color: colors.success,
     fontSize: 13,
     fontWeight: "800"
+  },
+  permissionError: {
+    color: colors.danger,
+    fontSize: 13,
+    fontWeight: "800",
+    lineHeight: 18
   },
   camera: {
     aspectRatio: 4 / 3,

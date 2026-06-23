@@ -84,6 +84,34 @@ describe("AI usage controls", () => {
     });
   });
 
+  it("accepts compressed phone photo payloads above the default parser limit", async () => {
+    const user = await signup();
+
+    const estimate = await app.inject({
+      method: "POST",
+      url: "/ai/meal-photo/estimate",
+      headers: auth(user.sessionToken),
+      payload: {
+        context: "packaged granola bar",
+        date: "2026-06-23",
+        imageBase64: "a".repeat(1_500_000),
+        mealGroupId: "meal_snack",
+        mimeType: "image/jpeg",
+        retainPhoto: false
+      }
+    });
+
+    expect(estimate.statusCode).toBe(200);
+    expect(estimate.json()).toMatchObject({
+      promptVersion: "meal-photo-estimate.v1",
+      usedFallback: true
+    });
+    expect(store.aiUsageEvents.at(-1)).toMatchObject({
+      endpoint: "meal-photo-estimate",
+      status: "accepted"
+    });
+  });
+
   it("blocks AI requests after the endpoint window limit is reached", async () => {
     const user = await signup();
     const now = new Date().toISOString();

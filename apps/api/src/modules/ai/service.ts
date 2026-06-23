@@ -31,7 +31,12 @@ const PHOTO_MODEL = env.aiPhotoModel;
 const MINI_MODEL = env.aiTextModel;
 const CORRECTION_MODEL = env.aiCorrectionModel;
 
-const openai = env.openaiApiKey ? new OpenAI({ apiKey: env.openaiApiKey }) : null;
+const openai = env.openaiApiKey && process.env.NODE_ENV !== "test" ? new OpenAI({ apiKey: env.openaiApiKey }) : null;
+
+type EstimateAttempt = {
+  estimate: MealEstimate | null;
+  fallbackReason: string | null;
+};
 
 function shouldPersistDirectlyToPrisma(): boolean {
   return env.storeDriver === "prisma" && process.env.NODE_ENV !== "test";
@@ -315,7 +320,7 @@ function inferDishName(text: string): string {
     .trim() || "Estimated meal";
 }
 
-function fallbackEstimate(text: string, mode: "text" | "photo"): MealEstimate {
+function fallbackEstimate(text: string, mode: "text" | "photo", reason: string): MealEstimate {
   const lower = text.toLowerCase();
   const isKhichdi = lower.includes("khichdi") || lower.includes("rice") || lower.includes("dal") || lower.includes("lentil");
   const isChicken = lower.includes("chicken");
@@ -358,7 +363,7 @@ function fallbackEstimate(text: string, mode: "text" | "photo"): MealEstimate {
       }
     ],
     assumptions: [
-      "Fallback estimate used because OpenAI is not configured.",
+      reason,
       "Assumes a moderate single serving and typical cooking fat."
     ],
     quickEdits: ["Half portion", "Larger portion", "No oil/ghee", "More protein"],
@@ -394,6 +399,7 @@ function fallbackEstimate(text: string, mode: "text" | "photo"): MealEstimate {
         }
       ],
       assumptions: [
+        reason,
         "Assumes a rice-heavy khichdi with dal and squash.",
         "Assumes about 1 tsp oil or ghee.",
         "Homemade recipes vary, so the estimate is intentionally editable."
@@ -434,8 +440,15 @@ async function callOpenAIForEstimate(params: {
   imageUrl?: string;
   imageBase64?: string;
   mode: "text" | "photo";
-}): Promise<MealEstimate | null> {
-  if (!openai) return null;
+}): Promise<EstimateAttempt> {
+  if (!openai) {
+    return {
+      estimate: null,
+      fallbackReason: process.env.NODE_ENV === "test"
+        ? "Fallback estimate used because OpenAI is disabled during tests."
+        : "Fallback estimate used because OpenAI is not configured."
+    };
+  }
   const correctionMemory = await correctionMemoryLines(params.userId, params.input);
   const promptText = params.mode === "photo"
     ? buildMealPhotoEstimatePrompt(params.input, correctionMemory)
@@ -468,6 +481,7 @@ async function callOpenAIForEstimate(params: {
             additionalProperties: false,
             required: [
               "dishName",
+              "mealGroupGuess",
               "portion",
               "macros",
               "calorieRange",
@@ -519,7 +533,7 @@ async function callOpenAIForEstimate(params: {
                 items: {
                   type: "object",
                   additionalProperties: false,
-                  required: ["name", "estimatedWeightG", "macros"],
+                  required: ["name", "estimatedWeightG", "confidence", "macros"],
                   properties: {
                     name: { type: "string" },
                     estimatedWeightG: { type: "number" },
@@ -551,11 +565,22 @@ async function callOpenAIForEstimate(params: {
     });
 
     const text = response.output_text as string | undefined;
-    if (!text) return null;
-    return MealEstimateSchema.parse(JSON.parse(text));
-  } catch {
-    return null;
+    if (!text) {
+      return { estimate: null, fallbackReason: "Fallback estimate used because OpenAI returned empty output." };
+    }
+    return { estimate: MealEstimateSchema.parse(JSON.parse(text)), fallbackReason: null };
+  } catch (error) {
+    const message = openAiErrorMessage(error);
+    console.warn(`[macro-ai] ${params.mode} estimate fell back: ${message}`);
+    return { estimate: null, fallbackReason: `Fallback estimate used because OpenAI failed: ${message}` };
   }
+}
+
+function openAiErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message.replace(/\s+/g, " ").slice(0, 220);
+  }
+  return "unknown OpenAI error";
 }
 
 function userAndTextInput(userIdOrInput: string | TextMealEstimateRequest, maybeInput?: TextMealEstimateRequest): {
@@ -620,13 +645,17 @@ export async function estimateTextMeal(
   }
 
   const model = MINI_MODEL;
-  const estimate = await callOpenAIForEstimate({
+  const attempt = await callOpenAIForEstimate({
     userId,
     model,
     input: input.text,
     mode: "text"
   });
-  const finalEstimate = await applyCorrectionMemory(userId, estimate ?? fallbackEstimate(input.text, "text"), input.text);
+  const finalEstimate = await applyCorrectionMemory(
+    userId,
+    attempt.estimate ?? fallbackEstimate(input.text, "text", attempt.fallbackReason ?? "Fallback estimate used because OpenAI failed."),
+    input.text
+  );
   const estimateId = await logAiEstimate({
     userId,
     estimate: finalEstimate,
@@ -634,7 +663,7 @@ export async function estimateTextMeal(
     inputType: "text",
     model,
     promptVersion: MEAL_TEXT_ESTIMATE_PROMPT_VERSION,
-    usedFallback: !estimate
+    usedFallback: !attempt.estimate
   });
 
   return {
@@ -642,7 +671,7 @@ export async function estimateTextMeal(
     estimateId,
     model,
     promptVersion: MEAL_TEXT_ESTIMATE_PROMPT_VERSION,
-    usedFallback: !estimate
+    usedFallback: !attempt.estimate
   };
 }
 
@@ -654,7 +683,7 @@ export async function estimatePhotoMeal(
 ): Promise<MealEstimateResponse> {
   const { userId, input } = userAndPhotoInput(userIdOrInput, maybeInput);
   const model = PHOTO_MODEL;
-  const estimate = await callOpenAIForEstimate({
+  const attempt = await callOpenAIForEstimate({
     userId,
     model,
     input: input.context,
@@ -662,7 +691,11 @@ export async function estimatePhotoMeal(
     imageBase64: input.imageBase64,
     mode: "photo"
   });
-  const finalEstimate = await applyCorrectionMemory(userId, estimate ?? fallbackEstimate(input.context, "photo"), input.context);
+  const finalEstimate = await applyCorrectionMemory(
+    userId,
+    attempt.estimate ?? fallbackEstimate(input.context, "photo", attempt.fallbackReason ?? "Fallback estimate used because OpenAI failed."),
+    input.context
+  );
   const estimateId = await logAiEstimate({
     userId,
     estimate: finalEstimate,
@@ -670,7 +703,7 @@ export async function estimatePhotoMeal(
     inputType: "photo",
     model,
     promptVersion: MEAL_PHOTO_ESTIMATE_PROMPT_VERSION,
-    usedFallback: !estimate
+    usedFallback: !attempt.estimate
   });
 
   return {
@@ -678,7 +711,7 @@ export async function estimatePhotoMeal(
     estimateId,
     model,
     promptVersion: MEAL_PHOTO_ESTIMATE_PROMPT_VERSION,
-    usedFallback: !estimate
+    usedFallback: !attempt.estimate
   };
 }
 

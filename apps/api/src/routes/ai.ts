@@ -23,6 +23,7 @@ import {
 } from "../modules/photos/service";
 import { resolveUserIdFromAuthHeaderAsync, userIdForSessionTokenAsync } from "../modules/auth/service";
 import { recordAnalyticsEvent } from "../modules/analytics/service";
+import { env } from "../lib/env";
 
 function safeDeleteRedirect(value: unknown): string {
   if (typeof value !== "string") return "http://localhost:8082/profile";
@@ -114,7 +115,7 @@ export async function registerAiRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/ai/meal-photo/estimate", async (request, reply) => {
+  app.post("/ai/meal-photo/estimate", { bodyLimit: env.photoRequestBodyLimitBytes }, async (request, reply) => {
     try {
       const userId = await resolveUserIdFromAuthHeaderAsync(request.headers.authorization);
       const input = parseBody(PhotoMealEstimateRequestSchema, request.body);

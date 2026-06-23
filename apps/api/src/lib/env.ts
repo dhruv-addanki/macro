@@ -1,4 +1,12 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const apiRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const workspaceRoot = resolve(apiRoot, "../..");
+
+dotenv.config({ path: resolve(workspaceRoot, ".env") });
+dotenv.config({ path: resolve(apiRoot, ".env") });
 
 function numberEnv(name: string, fallback: number): number {
   const value = Number(process.env[name]);
@@ -24,6 +32,8 @@ function photoStorageDriver(): "local" | "supabase" | "s3" {
   }
 }
 
+const photoMaxBytes = numberEnv("MACRO_PHOTO_MAX_BYTES", 8 * 1024 * 1024);
+
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",
   port: Number(process.env.PORT ?? 4000),
@@ -42,7 +52,8 @@ export const env = {
   s3SecretAccessKey: process.env.MACRO_S3_SECRET_ACCESS_KEY,
   s3ForcePathStyle: process.env.MACRO_S3_FORCE_PATH_STYLE === "true",
   photoAccessTtlSeconds: numberEnv("MACRO_PHOTO_ACCESS_TTL_SECONDS", 5 * 60),
-  photoMaxBytes: numberEnv("MACRO_PHOTO_MAX_BYTES", 8 * 1024 * 1024),
+  photoMaxBytes,
+  photoRequestBodyLimitBytes: numberEnv("MACRO_PHOTO_REQUEST_BODY_LIMIT_BYTES", Math.ceil(photoMaxBytes * 1.5)),
   retainedPhotoRetentionDays: numberEnv("MACRO_RETAINED_PHOTO_RETENTION_DAYS", 90),
   openaiApiKey: process.env.OPENAI_API_KEY,
   usdaApiKey: process.env.USDA_API_KEY,

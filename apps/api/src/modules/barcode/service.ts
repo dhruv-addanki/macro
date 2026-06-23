@@ -22,7 +22,7 @@ type OpenFoodFactsProduct = {
   nutriments?: Record<string, string | number | undefined>;
 };
 
-const openai = env.openaiApiKey ? new OpenAI({ apiKey: env.openaiApiKey }) : null;
+const openai = env.openaiApiKey && process.env.NODE_ENV !== "test" ? new OpenAI({ apiKey: env.openaiApiKey }) : null;
 
 const BarcodeUnitModelResponseSchema = z.object({
   servingUnits: z.array(

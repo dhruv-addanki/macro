@@ -13,17 +13,26 @@
         "NSPhotoLibraryUsageDescription": "Macro can use selected meal photos for nutrition estimates."
       }
     },
-    "android": {
-      "permissions": [
-        "CAMERA"
-      ]
-    },
     "web": {
       "bundler": "metro"
     },
     "plugins": [
       "expo-router",
-      "expo-image-picker",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Macro uses the camera to scan barcodes and estimate meal nutrition from photos.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Macro uses selected meal photos to estimate nutrition.",
+          "cameraPermission": "Macro uses the camera to photograph meals for nutrition estimates.",
+          "microphonePermission": false
+        }
+      ],
       "expo-secure-store"
     ]
   }
