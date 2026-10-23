@@ -119,11 +119,12 @@ final class LoggingController {
                 }
                 var request: InterpretRequest
                 if let data = draft.requestData,
-                   let cached = try? JSONDecoder().decode(InterpretRequest.self, from: data), cached.history != nil {
+                   let cached = try? JSONDecoder().decode(InterpretRequest.self, from: data),
+                   cached.history != nil, cached.text == draft.text {
                     request = cached
                 } else {
-                    // Upgrade old drafts without carrying implicit recent-log
-                    // context or a cached clarification into the new request.
+                    // Rebuild edited or legacy drafts without carrying stale
+                    // estimates, implicit recent logs, or cached clarifications.
                     draft.responseData = nil
                     draft.question = nil
                     let target = draft.targetID.flatMap(store.log)

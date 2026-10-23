@@ -125,6 +125,66 @@ struct FoodHistoryTests {
         #expect(resumed.draft?.state == "completed")
     }
 
+    @Test(arguments: [false, true])
+    func editedFailedDraftUsesNewTextAfterSwipeDismissal(usingHistory: Bool) async throws {
+        let store = try LocalStore(inMemory: true)
+        if usingHistory { try store.addManual(meal()) }
+        let ai = RetryingQuantityAI(usingHistory: usingHistory)
+        let logging = controller(store, ai)
+        logging.begin(date: "2026-10-23", record: false)
+        let reference = usingHistory ? ", the same one we logged before" : ""
+        logging.text = "One slice of garlic bread" + reference
+        logging.send()
+        try await finish(logging)
+        let draft = try #require(logging.draft)
+        #expect(draft.state == "failed")
+        let oldRequest = try JSONDecoder().decode(InterpretRequest.self, from: #require(draft.requestData))
+        #expect(oldRequest.history?.phase == (usingHistory ? "resolved" : "initial"))
+
+        logging.text = "Two slices of garlic bread" + reference
+        // AppRootView's swipe-dismissal callback persists the new text before
+        // reopening. The request cache still contains the failed original text.
+        logging.presented = false
+        draft.text = logging.text
+        try store.save()
+        logging.resume(draft)
+        logging.send()
+        try await finish(logging)
+
+        let requests = await ai.requests
+        let retried = requests[usingHistory ? 2 : 1]
+        #expect(retried.text == "Two slices of garlic bread" + reference)
+        #expect(retried.requestID != oldRequest.requestID)
+        #expect(retried.history?.phase == "initial")
+        #expect(retried.history?.matches.isEmpty == true)
+        #expect(store.totals(on: "2026-10-23").calories == 300)
+        #expect(store.logs.count == (usingHistory ? 2 : 1))
+        #expect(draft.state == "completed")
+    }
+
+    @Test func editedPersistedDraftDiscardsBothCachedRequestAndResponse() async throws {
+        let store = try LocalStore(inMemory: true)
+        let draft = try store.beginSubmission(date: "2026-10-23")
+        let request = InterpretRequest(requestID: UUID().uuidString, text: "One slice of garlic bread", selectedDate: draft.selectedDate, captureDate: draft.selectedDate, capturedAt: ISO8601DateFormatter().string(from: draft.capturedAt), timeZone: draft.capturedTimeZone, target: nil, recentLogs: [], previousQuestion: nil, history: .initial)
+        draft.requestData = try JSONEncoder().encode(request)
+        draft.responseData = try JSONEncoder().encode(InterpretResult(action: "create", logs: [meal(date: draft.selectedDate)]))
+        draft.text = "Two slices of garlic bread"
+        draft.state = "failed"
+        try store.save()
+        let ai = RetryingQuantityAI(failFirstEstimate: false)
+        let logging = controller(store, ai)
+        logging.resume(draft)
+        logging.send()
+        try await finish(logging)
+
+        let requests = await ai.requests
+        #expect(requests.count == 1)
+        #expect(requests.first?.text == draft.text)
+        #expect(requests.first?.requestID != request.requestID)
+        #expect(store.totals(on: draft.selectedDate).calories == 300)
+        #expect(store.logs.count == 1)
+    }
+
     @Test func noMatchStillLogsAndLookupCannotLoopOrAskQuestions() async throws {
         for mode in [HistoryAI.Mode.normal, .repeatLookup, .clarify] {
             let store = try LocalStore(inMemory: true)
@@ -199,4 +259,31 @@ private actor HistoryAI: MealAI {
         return InterpretResult(action: "create", logs: [log])
     }
     func transcribe(_ file: URL, id: UUID, configuration: ProxyConfiguration) async throws -> String { "Same garlic bread as before" }
+}
+
+private actor RetryingQuantityAI: MealAI {
+    let usingHistory: Bool
+    var failNextEstimate: Bool
+    var requests: [InterpretRequest] = []
+
+    init(usingHistory: Bool = false, failFirstEstimate: Bool = true) {
+        self.usingHistory = usingHistory
+        failNextEstimate = failFirstEstimate
+    }
+
+    func interpret(_ input: InterpretRequest, configuration: ProxyConfiguration) async throws -> InterpretResult {
+        requests.append(input)
+        if usingHistory && input.history?.phase == "initial" {
+            return InterpretResult(action: "lookup_history", logs: [], historyQueries: ["garlic bread"])
+        }
+        if failNextEstimate {
+            failNextEstimate = false
+            throw AIError.message("Temporary network failure")
+        }
+        let quantity = input.text.hasPrefix("Two") ? 2.0 : 1.0
+        let food = FoodComponent(name: "Garlic bread", portion: "\(quantity) slices", nutrition: Nutrition(calories: quantity * 150))
+        return InterpretResult(action: "create", logs: [ProposedLog(date: input.selectedDate, title: "Garlic bread", foods: [food], assumptions: [])])
+    }
+
+    func transcribe(_ file: URL, id: UUID, configuration: ProxyConfiguration) async throws -> String { "One slice of garlic bread" }
 }
