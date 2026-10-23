@@ -2,44 +2,34 @@
   "name": "macro",
   "version": "0.1.0",
   "private": true,
-  "description": "Macro calorie, macro, nutrition, barcode, and AI meal tracking app.",
+  "description": "Native Swift calorie tracking with a hosted OpenAI voice API.",
   "workspaces": [
-    "apps/*",
-    "packages/*"
+    "apps/api",
+    "packages/shared"
   ],
   "scripts": {
-    "dev:api": "npm run dev -w @macro/api",
-    "dev:db": "docker compose up -d postgres",
-    "dev:mobile": "npm run dev -w @macro/mobile",
-    "build:railway": "npm run db:generate",
-    "start:railway": "npm run start -w @macro/api",
-    "db:validate": "prisma validate",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:deploy": "prisma migrate deploy",
-    "db:studio": "prisma studio",
-    "eval:api": "npm run eval -w @macro/api",
-    "check:openai": "npm run check:openai -w @macro/api",
-    "cleanup:meal-photos": "npm run cleanup:meal-photos -w @macro/api",
+    "setup:ios": "node scripts/setup-ios.mjs",
+    "test:ios-project": "ruby scripts/test-ios-project.rb",
+    "test:voice-config": "node --test scripts/local-proxy-address.test.mjs",
+    "package:voice": "node scripts/package-voice.mjs",
+    "ios": "node scripts/run-ios.mjs",
+    "start:voice": "node scripts/voice-proxy.mjs start",
+    "stop:voice": "node scripts/voice-proxy.mjs stop",
+    "dev:voice": "npm run dev:voice -w @macro/api",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present"
   },
   "overrides": {
-    "@types/react": "19.1.17",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "react-native": "0.81.5",
-    "react-native-safe-area-context": "5.6.2",
-    "react-native-screens": "4.16.0",
-    "react-native-svg": "15.12.1",
     "typescript": "5.9.3"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "dependencies": {
-    "dotenv": "^17.4.2",
-    "prisma": "^7.8.0"
+    "dotenv": "^17.4.2"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.1"
   }
 }

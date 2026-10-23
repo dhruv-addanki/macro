@@ -3,6 +3,9 @@
   "compilerOptions": {
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "paths": {
+      "fastify": ["./node_modules/fastify", "../../node_modules/fastify"]
+    },
     "noEmit": true,
     "types": ["node"]
   },
