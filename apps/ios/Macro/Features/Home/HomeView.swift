@@ -37,7 +37,7 @@ struct HomeView: View {
                             HStack {
                                 Image(systemName: "doc.text")
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text(draft.state == "clarifying" ? "One question about your meal" : "Unfinished meal")
+                                    Text("Unfinished meal")
                                     Text(draft.text.isEmpty ? "Recording draft" : draft.text).font(.caption).lineLimit(2).foregroundStyle(MacroTheme.secondary)
                                 }
                                 Spacer()

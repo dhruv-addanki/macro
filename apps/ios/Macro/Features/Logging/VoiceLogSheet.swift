@@ -39,14 +39,6 @@ struct VoiceLogSheet: View {
                             .accessibilityIdentifier("mealDescription")
                             .disabled(logging.busy)
                     }
-                    if let question = logging.draft?.question {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text(question).font(.headline)
-                            TextField("Your answer", text: $logging.answer, axis: .vertical)
-                                .textFieldStyle(.roundedBorder)
-                                .accessibilityIdentifier("clarificationAnswer")
-                        }
-                    }
                     if let message = logging.errorMessage {
                         ErrorLabel(message: message)
                         if logging.draft?.targetID != nil {

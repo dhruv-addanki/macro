@@ -73,7 +73,6 @@ final class LocalStore {
     func totals(on date: String) -> Nutrition { .total(entries(on: date).map(\.nutrition)) }
     func goal(on date: String) -> NutritionGoal? { goals.last { $0.effectiveFrom <= date } }
     func log(_ id: UUID) -> MealLog? { logs.first { $0.id == id } }
-    func recentContext() -> [LogContext] { logs.sorted { $0.updatedAt > $1.updatedAt }.prefix(8).map(\.context) }
 
     func beginSubmission(date: String, target: MealLog? = nil) throws -> PendingSubmission {
         let draft = PendingSubmission(date: date, target: target)
@@ -99,7 +98,7 @@ final class LocalStore {
         try result.validate()
         if submission.state == "completed" { return [] }
         guard submission.state != "canceled" else { throw DiaryError.canceled }
-        guard result.action != "clarify" else { return [] }
+        guard ["create", "update"].contains(result.action) else { throw DiaryError.invalidFood }
         var before: [LogSnapshot] = []
         var changed: [MealLog] = []
         do {

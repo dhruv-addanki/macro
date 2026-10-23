@@ -226,27 +226,6 @@ struct DiaryTests {
         #expect(!String(decoding: bytes, as: UTF8.self).contains("proxyToken"))
     }
 
-    @Test func clarificationDoesNotCountUntilAnswered() async throws {
-        let store = try LocalStore(inMemory: true)
-        let configuration = AppConfiguration()
-        configuration.url = "http://127.0.0.1:4001"
-        configuration.token = "unit-test-token-long-enough"
-        let ai = ClarifyingAI(log: proposal())
-        let controller = LoggingController(store: store, configuration: configuration, ai: ai)
-        controller.begin(date: "2026-10-22", record: false)
-        controller.text = "A bowl"
-        controller.send()
-        try await finish(controller)
-        #expect(store.logs.isEmpty)
-        #expect(controller.draft?.state == "clarifying")
-        controller.answer = "One cup of rice"
-        controller.send()
-        try await finish(controller)
-        #expect(store.logs.count == 1)
-        #expect(controller.draft?.state == "completed")
-        #expect(controller.draft?.text.contains("One cup of rice") == true)
-    }
-
     @Test func canceledInFlightInterpretationCannotSave() async throws {
         let store = try LocalStore(inMemory: true)
         let configuration = AppConfiguration()
@@ -360,18 +339,6 @@ struct DiaryTests {
         }
         Issue.record("The logging controller did not finish")
     }
-}
-
-private actor ClarifyingAI: MealAI {
-    let log: ProposedLog
-    var calls = 0
-    init(log: ProposedLog) { self.log = log }
-    func interpret(_ input: InterpretRequest, configuration: ProxyConfiguration) async throws -> InterpretResult {
-        calls += 1
-        if calls == 1 { return InterpretResult(action: "clarify", logs: [], question: "What was in the bowl?") }
-        return InterpretResult(action: "create", logs: [log])
-    }
-    func transcribe(_ file: URL, id: UUID, configuration: ProxyConfiguration) async throws -> String { "Lunch" }
 }
 
 private struct SlowAI: MealAI {

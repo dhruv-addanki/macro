@@ -78,6 +78,20 @@ struct LogContext: Codable, Sendable {
     var assumptions: [String]
 }
 
+struct HistoricalFood: Codable, Equatable, Sendable {
+    var id: String
+    var date: String
+    var food: FoodComponent
+}
+
+struct FoodHistory: Codable, Sendable {
+    var phase: String
+    var queries: [String]
+    var matches: [HistoricalFood]
+
+    static let initial = FoodHistory(phase: "initial", queries: [], matches: [])
+}
+
 struct InterpretRequest: Codable, Sendable {
     var requestID: String
     var text: String
@@ -88,9 +102,10 @@ struct InterpretRequest: Codable, Sendable {
     var target: LogContext?
     var recentLogs: [LogContext]
     var previousQuestion: String?
+    var history: FoodHistory? = nil
 
     enum CodingKeys: String, CodingKey {
-        case requestID, text, selectedDate, captureDate, capturedAt, timeZone, target, recentLogs, previousQuestion
+        case requestID, text, selectedDate, captureDate, capturedAt, timeZone, target, recentLogs, previousQuestion, history
     }
 
     func encode(to encoder: Encoder) throws {
@@ -104,6 +119,7 @@ struct InterpretRequest: Codable, Sendable {
         try c.encode(target, forKey: .target)
         try c.encode(recentLogs, forKey: .recentLogs)
         try c.encode(previousQuestion, forKey: .previousQuestion)
+        try c.encodeIfPresent(history, forKey: .history)
     }
 }
 
@@ -114,6 +130,7 @@ struct InterpretResult: Codable, Equatable, Sendable {
     var targetLogID: String?
     var expectedRevision: Int?
     var question: String?
+    var historyQueries: [String]? = nil
 
     func validate() throws {
         guard schemaVersion == 1 else { throw DiaryError.invalidFood }
@@ -125,8 +142,13 @@ struct InterpretResult: Codable, Equatable, Sendable {
                   let expectedRevision, expectedRevision >= 0, question == nil else { throw DiaryError.invalidFood }
         case "clarify":
             guard logs.isEmpty, let question, !question.isEmpty, targetLogID == nil, expectedRevision == nil else { throw DiaryError.invalidFood }
+        case "lookup_history":
+            guard logs.isEmpty, targetLogID == nil, expectedRevision == nil, question == nil,
+                  let historyQueries, (1...5).contains(historyQueries.count),
+                  historyQueries.allSatisfy({ !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && $0.count <= 200 }) else { throw DiaryError.invalidFood }
         default: throw DiaryError.invalidFood
         }
+        guard action == "lookup_history" || historyQueries == nil else { throw DiaryError.invalidFood }
         try logs.forEach { try $0.validate() }
     }
 }

@@ -1,7 +1,8 @@
 import OpenAI from "openai";
-import { validateVoiceResult, voiceOutputJSONSchema, type VoiceInterpretRequest, type VoiceInterpretResult } from "@macro/shared";
+import { voiceOutputJSONSchema, type VoiceInterpretRequest, type VoiceInterpretResult } from "@macro/shared";
 import type { VoiceEnv } from "../../lib/voiceEnv";
 import { voiceLoggingPrompt } from "./prompts/voiceLogging.v1";
+import { foodHistoryInstructions, resolveFoodHistory } from "./foodHistory";
 
 export interface VoiceAI {
   interpret(input: VoiceInterpretRequest): Promise<VoiceInterpretResult>;
@@ -20,13 +21,13 @@ export function createVoiceAI(env: VoiceEnv): VoiceAI {
         model: env.model, reasoning: { effort: env.effort }, max_output_tokens: 12000,
         store: false,
         input: [
-          { role: "system", content: voiceLoggingPrompt },
+          { role: "system", content: voiceLoggingPrompt + "\n" + foodHistoryInstructions(input) },
           { role: "user", content: JSON.stringify(input) }
         ],
         text: { format: { type: "json_schema", name: "meal_diary_proposal", strict: true, schema: voiceOutputJSONSchema } }
       });
       if (!response.output_text) throw Object.assign(new Error("The model did not return a complete food estimate. Try again or enter it manually."), { statusCode: 502 });
-      return validateVoiceResult(JSON.parse(response.output_text), input);
+      return resolveFoodHistory(JSON.parse(response.output_text), input);
     },
     async transcribe(data, filename, mime) {
       const file = await OpenAI.toFile(data, filename, { type: mime });

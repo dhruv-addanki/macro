@@ -11,6 +11,22 @@ const response: VoiceInterpretResult = { schemaVersion: 1, action: "create", log
 const headers = { authorization: `Bearer ${env.token}` };
 
 describe("native voice proxy", () => {
+  it("deduplicates each phase of a local history lookup independently", async () => {
+    const lookup = { ...response, action: "lookup_history" as const, logs: [], historyQueries: ["garlic bread"] };
+    const interpret = vi.fn(async (request: VoiceInterpretRequest) => request.history?.phase === "initial" ? lookup : response);
+    const app = await buildVoiceServer({ env, ai: { interpret, transcribe: async () => "Hello" } });
+    try {
+      const initial = { ...input, text: "The same garlic bread we logged before", history: { phase: "initial", queries: [], matches: [] } };
+      const resolved = { ...initial, requestID: "bb865375-11f1-4a35-867f-a4b62cff4aac", history: { phase: "resolved", queries: ["garlic bread"], matches: [{ id: "snapshot", date: "2026-01-01", food }] } };
+      const send = (payload: unknown) => app.inject({ method: "POST", url: "/v1/meals/interpret", headers, payload: payload as object });
+      expect((await send(initial)).json().action).toBe("lookup_history");
+      expect((await send(initial)).json().action).toBe("lookup_history");
+      expect((await send(resolved)).json().action).toBe("create");
+      expect((await send(resolved)).json().action).toBe("create");
+      expect(interpret).toHaveBeenCalledTimes(2);
+    } finally { await app.close(); }
+  });
+
   it.each([false, true])("accepts bounded imported history for new meals and corrections (correction=%s)", async (correction) => {
     const imported = { ...log, id: "57a88780-d43e-45e7-b10b-e70a412bb7ab", revision: 3,
       foods: [{ ...food, source: "imported_daily_estimate", ingredients: Array.from({ length: 35 }, () => "i".repeat(300)) }],

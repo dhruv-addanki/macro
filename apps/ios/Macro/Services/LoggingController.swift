@@ -11,7 +11,6 @@ final class LoggingController {
     private var operationID = UUID()
     var draft: PendingSubmission?
     var text = ""
-    var answer = ""
     var errorMessage: String?
     var busy = false
     var phase = ""
@@ -33,7 +32,6 @@ final class LoggingController {
         errorMessage = nil
         completedDate = nil
         text = ""
-        answer = ""
         do {
             draft = try store.beginSubmission(date: date, target: target)
             presented = true
@@ -48,7 +46,6 @@ final class LoggingController {
         phase = ""
         self.draft = draft
         text = draft.text
-        answer = ""
         errorMessage = draft.errorMessage
         presented = true
     }
@@ -71,7 +68,6 @@ final class LoggingController {
                 draft.question = nil
                 draft.errorMessage = nil
                 text = ""
-                answer = ""
                 draft.state = "recording"
                 try store.save()
             } catch is CancellationError {
@@ -121,31 +117,29 @@ final class LoggingController {
                     text = transcript
                     try store.save()
                 }
-                if let question = draft.question, !answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    draft.text += "\nClarification: \(question)\nAnswer: \(answer)"
-                    text = draft.text
-                    answer = ""
-                    draft.requestData = nil
-                    draft.responseData = nil
-                }
-                let request: InterpretRequest
-                if let data = draft.requestData {
-                    request = try JSONDecoder().decode(InterpretRequest.self, from: data)
+                var request: InterpretRequest
+                if let data = draft.requestData,
+                   let cached = try? JSONDecoder().decode(InterpretRequest.self, from: data), cached.history != nil {
+                    request = cached
                 } else {
+                    // Upgrade old drafts without carrying implicit recent-log
+                    // context or a cached clarification into the new request.
+                    draft.responseData = nil
+                    draft.question = nil
                     let target = draft.targetID.flatMap(store.log)
                     if let revision = draft.targetRevision, target?.revision != revision { throw DiaryError.staleCorrection }
                     request = InterpretRequest(
                         requestID: UUID().uuidString, text: draft.text, selectedDate: draft.selectedDate,
                         captureDate: DiaryCalendar.key(draft.capturedAt, timeZone: TimeZone(identifier: draft.capturedTimeZone) ?? .current),
                         capturedAt: ISO8601DateFormatter().string(from: draft.capturedAt), timeZone: draft.capturedTimeZone,
-                        target: target?.context, recentLogs: store.recentContext(), previousQuestion: draft.question
+                        target: target?.context, recentLogs: [], previousQuestion: nil, history: .initial
                     )
                     draft.requestData = try JSONEncoder().encode(request)
                 }
                 phase = "Estimating"
                 draft.state = "estimating"
                 try store.save()
-                let result: InterpretResult
+                var result: InterpretResult
                 if let response = draft.responseData {
                     result = try JSONDecoder().decode(InterpretResult.self, from: response)
                 } else {
@@ -154,13 +148,21 @@ final class LoggingController {
                 try Task.checkCancellation()
                 guard draft.state != "canceled" else { throw DiaryError.canceled }
                 try result.validate()
-                if result.action == "clarify" {
-                    draft.question = result.question
-                    draft.state = "clarifying"
-                    draft.requestData = nil
+                if result.action == "lookup_history" {
+                    guard request.history?.phase == "initial", let queries = result.historyQueries else { throw DiaryError.invalidFood }
+                    request.history = FoodHistory(phase: "resolved", queries: queries, matches: store.foodHistory(matching: queries))
+                    // A new idempotency key for this phase, stable across retries.
+                    // Persist before sending so a network failure can resume here.
+                    request.requestID = UUID().uuidString
+                    draft.requestData = try JSONEncoder().encode(request)
+                    draft.responseData = nil
                     try store.save()
-                    return
+                    result = try await ai.interpret(request, configuration: config)
+                    try Task.checkCancellation()
+                    guard draft.state != "canceled" else { throw DiaryError.canceled }
+                    try result.validate()
                 }
+                guard ["create", "update"].contains(result.action) else { throw DiaryError.invalidFood }
                 draft.responseData = try JSONEncoder().encode(result)
                 draft.state = "saving"
                 phase = "Saving"
@@ -187,6 +189,10 @@ final class LoggingController {
     func keepDraft() {
         task?.cancel()
         stopRecording()
+        if draft?.text != text {
+            draft?.requestData = nil
+            draft?.responseData = nil
+        }
         draft?.text = text
         try? store.save()
         presented = false

@@ -10,6 +10,8 @@ The only backend is **Macro Voice API**, hosted at `https://macro-voice-api-prod
 
 Typed logging starts at step 2. The OpenAI key stays on Railway. A Mac server is not needed for the configured phone.
 
+Explicit references such as “the same garlic bread we logged last time” trigger a hidden lookup across the phone's local diary. Only matching food snapshots go to the API, which reuses their macros at the newly spoken quantity. Ordinary logs send no history. Logging never asks follow-up questions; unmatched foods are estimated and can be edited afterward. See [food history](./docs/FOOD_HISTORY.md) for the protocol, tests, and rollout order.
+
 ## Repository
 
 - `apps/ios`: SwiftUI app, SwiftData persistence, Apple audio capture, native tests.

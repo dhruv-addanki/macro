@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A77C00000000000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A77C00000000000000000002 /* Assets.xcassets */; };
 		044CA3539D62A3DE9F830948 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 948F8897AFBFABE7F8C99611 /* ProfileView.swift */; };
 		090FFF3B9C760AC47BD90316 /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15A1F1A45E58D12273899C64 /* AudioRecorder.swift */; };
 		09FAF7161A205EF694A82E08 /* ConnectionSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3E42AEFFB64EA7D20165A5D /* ConnectionSettingsView.swift */; };
@@ -17,12 +16,14 @@
 		4C26873766E98FF3F11F767E /* DiaryCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 353FBC8DF2AC6CC9BBCED7EA /* DiaryCalendar.swift */; };
 		53925AC850D44BDDC4947F05 /* MealLogCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F872E7E969326C9F2E329B58 /* MealLogCard.swift */; };
 		54CB92D145F2A21842D2B7A8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B6E5B44DBD5BBA1E08FFDF19 /* Foundation.framework */; };
+		5A42355225FE25D02F9340FD /* FoodHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E25C388D886FE58DC74AF2F /* FoodHistoryTests.swift */; };
 		6EC8558606FF3D8C051991AE /* ManualMealEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0241EFF9C6482410879309EA /* ManualMealEditor.swift */; };
 		7FF98614954F504176A33BE2 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B6E5B44DBD5BBA1E08FFDF19 /* Foundation.framework */; };
 		82AEFBC2DEFC417F2B3A5C12 /* MacroTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 606A6A90118B9A577FA16D90 /* MacroTheme.swift */; };
 		96389300D657DCB3E6E948CC /* GoalSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 809EA0BD6BA2CB5A1CA769AD /* GoalSetupView.swift */; };
 		9EB8263F16B7449849D7F064 /* StoredModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3770D8C31356FEE941696201 /* StoredModels.swift */; };
 		A25708F1B017262CDBFA5AF3 /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9011A1CFF9D93BBA0F4D378E /* AppRootView.swift */; };
+		A77C00000000000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A77C00000000000000000002 /* Assets.xcassets */; };
 		A9DDD017BBF27ED94674753C /* LoggingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35DADD0FF6E184797EED2BA7 /* LoggingController.swift */; };
 		AD5876B6B6626803ED6A0C9A /* AIContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DABEA750DB19903255FB924 /* AIContracts.swift */; };
 		BC9D2D9CE3B3E7B1034C89BA /* MacroApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C19713331423C1416155D095 /* MacroApp.swift */; };
@@ -31,6 +32,7 @@
 		D56BAE43E91E4D479AAA7F37 /* AIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AD2E306A583911B73930BB2 /* AIClient.swift */; };
 		DFE301150F815F4725513635 /* ProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F19FFC791903BE288ED8CF9 /* ProgressView.swift */; };
 		E070438B109A98057DD8C9BB /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B6E5B44DBD5BBA1E08FFDF19 /* Foundation.framework */; };
+		EDFADE143CF508205E77E8C2 /* FoodHistorySearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4CB80FCD8C8C9B57138AB1 /* FoodHistorySearch.swift */; };
 		FF94689C5C82826B9D4FF9AA /* LocalStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB6DBBA1D80B1D5BA6DC8CE3 /* LocalStore.swift */; };
 /* End PBXBuildFile section */
 
@@ -52,7 +54,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		A77C00000000000000000002 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		0241EFF9C6482410879309EA /* ManualMealEditor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ManualMealEditor.swift; path = Features/Logging/ManualMealEditor.swift; sourceTree = "<group>"; };
 		06D73649ACB1464CB8A85D7C /* Debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
 		15A1F1A45E58D12273899C64 /* AudioRecorder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AudioRecorder.swift; path = Services/AudioRecorder.swift; sourceTree = "<group>"; };
@@ -68,6 +69,7 @@
 		5AE3FA9842A2AE38FC731D22 /* DiaryTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DiaryTests.swift; sourceTree = "<group>"; };
 		606A6A90118B9A577FA16D90 /* MacroTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MacroTheme.swift; path = Design/MacroTheme.swift; sourceTree = "<group>"; };
 		7AD2E306A583911B73930BB2 /* AIClient.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AIClient.swift; path = Services/AIClient.swift; sourceTree = "<group>"; };
+		7E25C388D886FE58DC74AF2F /* FoodHistoryTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FoodHistoryTests.swift; sourceTree = "<group>"; };
 		809EA0BD6BA2CB5A1CA769AD /* GoalSetupView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GoalSetupView.swift; path = Features/Profile/GoalSetupView.swift; sourceTree = "<group>"; };
 		8481A805942A4F5BD1B862EC /* AppConfiguration.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AppConfiguration.swift; path = Config/AppConfiguration.swift; sourceTree = "<group>"; };
 		9011A1CFF9D93BBA0F4D378E /* AppRootView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AppRootView.swift; path = App/AppRootView.swift; sourceTree = "<group>"; };
@@ -75,6 +77,8 @@
 		9797E31417F2EFDDA7C70608 /* MacroUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacroUITests.swift; sourceTree = "<group>"; };
 		9DA430D56B27B1F0F7F1EC37 /* VoiceLogSheet.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = VoiceLogSheet.swift; path = Features/Logging/VoiceLogSheet.swift; sourceTree = "<group>"; };
 		A3E42AEFFB64EA7D20165A5D /* ConnectionSettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ConnectionSettingsView.swift; path = Features/Profile/ConnectionSettingsView.swift; sourceTree = "<group>"; };
+		A77C00000000000000000002 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AA4CB80FCD8C8C9B57138AB1 /* FoodHistorySearch.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = FoodHistorySearch.swift; path = Persistence/FoodHistorySearch.swift; sourceTree = "<group>"; };
 		B6E5B44DBD5BBA1E08FFDF19 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS14.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		B826A87C8AF4E300C811C1DE /* Release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		C19713331423C1416155D095 /* MacroApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MacroApp.swift; path = App/MacroApp.swift; sourceTree = "<group>"; };
@@ -146,6 +150,7 @@
 				15A1F1A45E58D12273899C64 /* AudioRecorder.swift */,
 				353FBC8DF2AC6CC9BBCED7EA /* DiaryCalendar.swift */,
 				35DADD0FF6E184797EED2BA7 /* LoggingController.swift */,
+				AA4CB80FCD8C8C9B57138AB1 /* FoodHistorySearch.swift */,
 			);
 			path = Macro;
 			sourceTree = "<group>";
@@ -154,6 +159,7 @@
 			isa = PBXGroup;
 			children = (
 				5AE3FA9842A2AE38FC731D22 /* DiaryTests.swift */,
+				7E25C388D886FE58DC74AF2F /* FoodHistoryTests.swift */,
 			);
 			path = MacroTests;
 			sourceTree = "<group>";
@@ -319,6 +325,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BDA988C663884E2D1EDF3EF4 /* DiaryTests.swift in Sources */,
+				5A42355225FE25D02F9340FD /* FoodHistoryTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -345,6 +352,7 @@
 				090FFF3B9C760AC47BD90316 /* AudioRecorder.swift in Sources */,
 				4C26873766E98FF3F11F767E /* DiaryCalendar.swift in Sources */,
 				A9DDD017BBF27ED94674753C /* LoggingController.swift in Sources */,
+				EDFADE143CF508205E77E8C2 /* FoodHistorySearch.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
