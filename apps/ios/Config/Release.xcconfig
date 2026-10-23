@@ -1,0 +1,4 @@
+MACRO_API_BASE_URL = https:/$()/macro-voice-api-production.up.railway.app
+MACRO_DEV_API_TOKEN =
+MACRO_BUNDLE_ID = com.macro.local
+MACRO_DEVELOPMENT_TEAM =

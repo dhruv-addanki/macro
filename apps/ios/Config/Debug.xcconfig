@@ -1,0 +1,5 @@
+MACRO_API_BASE_URL = http:/$()/127.0.0.1:4001
+MACRO_DEV_API_TOKEN =
+MACRO_BUNDLE_ID = com.macro.local
+MACRO_DEVELOPMENT_TEAM =
+#include? "Local.xcconfig"

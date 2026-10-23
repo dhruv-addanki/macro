@@ -1,40 +1,55 @@
 # Macro
 
-Macro is a mobile-first calorie, macro, and nutrition tracker designed to keep the clean daily logging experience of apps like MyFitnessPal while making food entry substantially more intelligent.
+Macro is a native SwiftUI iPhone app for low-friction calorie and macro tracking. Meals, goals, profile settings, and drafts are stored locally with SwiftData.
 
-The product focus is:
+The only backend is **Macro Voice API**, hosted at `https://macro-voice-api-production.up.railway.app`. It handles both steps of voice logging:
 
-- Clean daily tracking organized by configurable meal groups.
-- Daily calorie, macro, sugar, fiber, and sodium targets with editable logged nutrition.
-- Fast manual, recent, favorite, and editable saved-meal logging.
-- Reliable barcode scanning for packaged foods, including mobile manual product creation/correction and smart serving-unit suggestions.
-- AI-assisted photo meal estimation for homemade, mixed, cultural, and restaurant meals.
-- Transparent assumptions, confidence, and quick corrections instead of fake precision.
-- Per-user AI usage tracking with local request limits, daily budgets, and transaction-backed Prisma reservations in Prisma mode.
-- Local logging-quality analytics for source split, correction rate, scan failures, and AI cost per logged meal.
-- A committed Prisma/Postgres schema, migrations, and opt-in Prisma-backed API runtime.
-- Direct Prisma-backed auth/session, profile/onboarding, meal-group management, diary entry, food/favorite, saved-meal, recipe, retained-photo metadata, progress weight-entry, AI estimate/correction history, analytics event, and AI usage event persistence when `MACRO_STORE_DRIVER=prisma`.
-- Direct Prisma-backed read paths for the core mobile screens: auth session resolution, `/me` profile state, diary, food search/recent/favorites, barcode cache/unit suggestions, saved meals, recipes, progress summary, analytics summary, AI history, retained meal photos, and personal saved-meal matching.
-- Targeted Prisma indexes for the user/date, food lookup, saved-meal, recipe, retained-photo, AI history/usage, and progress paths used by the mobile API.
-- Local passwordless auth for zero-config development, plus opt-in Supabase Auth where the Expo app signs up/logs in with Supabase, securely stores and refreshes the Supabase session, and the API verifies bearer tokens server-side.
-- Local retained-photo storage for zero-config development, Supabase Storage as the intended private object store, optional legacy S3-compatible storage behind env config, short-lived signed/private read access, basic image byte validation, and a dry-run-first retained-photo cleanup script.
-- Env-configurable OpenAI model routing for photo, text, correction, and barcode-unit intelligence.
-- Versioned prompt modules for text meal estimates, photo meal estimates, corrections, barcode units, and saved-meal matching.
-- Native session-token persistence with Expo SecureStore and web fallback storage.
-- Railway production deployment with Prisma migrations, private Postgres, API health checks, disabled ephemeral photo retention, and per-tester local sessions.
+1. The iPhone uploads a recording to `POST /v1/audio/transcribe`. Railway calls OpenAI transcription and returns the transcript.
+2. The iPhone sends the transcript to `POST /v1/meals/interpret`. Railway calls OpenAI for a validated nutrition estimate or correction.
+3. The iPhone applies the result to its local diary.
 
-Planning docs:
+Typed logging starts at step 2. The OpenAI key stays on Railway. A Mac server is not needed for the configured phone.
 
-- [PRD.md](./PRD.md) - product requirements and feature scope.
-- [BUILD_PLAN.md](./BUILD_PLAN.md) - technical architecture, milestones, and implementation plan.
-- [docs/RAILWAY_DEPLOYMENT.md](./docs/RAILWAY_DEPLOYMENT.md) - Railway API/Postgres and TestFlight environment setup.
+## Repository
 
-Local runtime note: the API defaults to the JSON development store for fast local work. Set `MACRO_STORE_DRIVER=prisma` with `DATABASE_URL` to apply the committed migrations, seed reference foods/user defaults, write auth/session, profile/onboarding, meal groups, diary entries, food/favorites, saved meals, recipes, retained-photo metadata, progress weight entries, AI estimate/correction history, analytics events, and AI usage events directly through Prisma, and read the core mobile/auth/barcode screens directly from Prisma. Whole-store snapshot persistence is disabled in Prisma mode so missing repository paths fail fast.
+- `apps/ios`: SwiftUI app, SwiftData persistence, Apple audio capture, native tests.
+- `apps/api`: authenticated Voice API and its tests.
+- `packages/shared`: voice request/response schema and validation.
+- `deploy/voice`: Docker and Railway deployment configuration.
+- `scripts`: local setup, Xcode project generation, packaging, credentials, and verification.
+- `docs`: current product/design, implementation, and operating instructions.
 
-Environment note: the API loads `.env` from the repo root and then `apps/api/.env` if present. Keep `OPENAI_API_KEY`, storage service-role keys, and database credentials API-side; Expo should only receive `EXPO_PUBLIC_*` values.
+The legacy Expo app, server-owned diary, database migrations, photo/barcode services, and old deployment files have been removed.
 
-Mobile runtime note: the Expo app is the primary client. It supports iOS, Android, and web for development, with native camera/photo-library and barcode flows wired through the backend. Local auth session tokens or optional Supabase access/refresh session data persist through Expo SecureStore on native builds and browser storage on web. The Railway/TestFlight configuration uses local accounts, disables the shared demo identity, and discards analyzed photos. API keys, OpenAI credentials, and any optional storage credentials stay server-side.
+## Development
 
-Credential checks: after filling real OpenAI values, run `npm run check:openai` to validate the configured text, correction, barcode-unit, and photo model routes. After filling real Supabase Storage values, run `MACRO_PHOTO_STORAGE_DRIVER=supabase npm run check:supabase-storage -w @macro/api`.
+Use Node 22+ and Xcode with iOS 26+ support.
 
-Photo lifecycle: run `npm run cleanup:meal-photos` to preview retained meal photos older than `MACRO_RETAINED_PHOTO_RETENTION_DAYS`; add `-- --apply` to delete matching objects and metadata.
+```sh
+npm ci
+npm run setup:ios
+npm run ios
+```
+
+These commands run the local development variant. Put the server-side OpenAI key in ignored `apps/api/.env.voice`. For the hosted service, configure its HTTPS URL and a provisioned device credential in Profile > API connection. Credentials are stored in Keychain.
+
+```sh
+npm test
+npm run typecheck
+npm run test:voice-config
+npm run test:ios-project
+npm run package:voice
+node scripts/test-voice-package.mjs
+```
+
+## Documentation
+
+- [Product requirements](./PRD.md)
+- [Build status and next work](./BUILD_PLAN.md)
+- [Voice-first design brief](./docs/VOICE_FIRST_V1_BRIEF.md)
+- [Swift implementation outline](./docs/SWIFT_IMPLEMENTATION_PLAN.md)
+- [Local development](./docs/SWIFT_LOCAL_DEV.md)
+- [Hosted API and deployment](./docs/SWIFT_HOSTED_API.md)
+- [Verification evidence](./docs/SWIFT_VERIFICATION.md)
+
+The hosted API currently serves provisioned devices. TestFlight, public accounts, cloud diary backup/sync, and user-facing import/restore are not implemented. A developer-only meal-history transfer is available in Debug builds; see the local development guide.
